@@ -7,6 +7,8 @@ class SantriModel {
   final String kehadiranStatus; // "Hadir", "Izin", "Sakit", "Alpha"
   final double kehadiranPercentage;
 
+  final String jenisKelamin; // "Laki-laki" or "Perempuan"
+
   const SantriModel({
     required this.id,
     required this.nama,
@@ -15,6 +17,7 @@ class SantriModel {
     required this.uangSaku,
     required this.kehadiranStatus,
     required this.kehadiranPercentage,
+    this.jenisKelamin = 'Laki-laki',
   });
 }
 
@@ -27,6 +30,7 @@ class MockData {
       uangSaku: 150000,
       kehadiranStatus: 'Hadir',
       kehadiranPercentage: 95.0,
+      jenisKelamin: 'Laki-laki',
     ),
     SantriModel(
       id: '2',
@@ -35,6 +39,7 @@ class MockData {
       uangSaku: 50000,
       kehadiranStatus: 'Sakit',
       kehadiranPercentage: 88.5,
+      jenisKelamin: 'Perempuan',
     ),
   ];
 }
