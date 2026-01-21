@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
-import 'package:pesantren_mobile/src/features/auth/login_page.dart';
+import 'package:pesantren_mobile/src/features/home/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Navigate to Login (or Home if auth was implemented)
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
 
