@@ -6,6 +6,8 @@ import 'package:pesantren_mobile/src/features/bills/service/bill_service.dart';
 import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 
+/// Page for displaying unpaid bills (General and Event).
+/// Uses a custom SliverAppBar to match the Home design.
 class BillsListPage extends StatefulWidget {
   final SantriModel activeSantri;
   final VoidCallback? onBack; // Optional custom back behavior
