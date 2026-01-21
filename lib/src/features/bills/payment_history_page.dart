@@ -6,6 +6,8 @@ import 'package:pesantren_mobile/src/features/bills/service/bill_service.dart';
 import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 
+/// Page for displaying paid bill history.
+/// Filters only bills with BillStatus.PAID.
 class PaymentHistoryPage extends StatefulWidget {
   final SantriModel activeSantri;
   final VoidCallback? onBack;
