@@ -1,0 +1,454 @@
+Table: schools
+Structure:
+  - ulid('id')->primary()
+  - string('name')
+  - string('slug')->unique(); // For identification e.g. 'center', 'branch-1'
+  - string('address')->nullable()
+  - string('phone')->nullable()
+  - string('email')->nullable()
+  - string('theme_color')->nullable(); // Hex color for theme customization
+  - string('logo_path')->nullable(); // Path to school logo
+  - timestamps()
+
+------------------------------
+
+Table: users
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->nullable()->constrained()->onDelete('cascade')
+  - string('name')
+  - string('email')->nullable()->unique()
+  - string('phone_number')->unique()
+  - timestamp('email_verified_at')->nullable()
+  - string('password')
+  - text('two_factor_secret')->nullable()
+  - text('two_factor_recovery_codes')->nullable()
+  - timestamp('two_factor_confirmed_at')->nullable()
+  - text('fcm_token')->nullable()
+  - rememberToken()
+  - timestamps()
+
+------------------------------
+
+Table: password_reset_tokens
+Structure:
+  - string('email')->primary()
+  - string('token')
+  - timestamp('created_at')->nullable()
+
+------------------------------
+
+Table: sessions
+Structure:
+  - string('id')->primary()
+  - foreignUlid('user_id')->nullable()->index()
+  - string('ip_address', 45)->nullable()
+  - text('user_agent')->nullable()
+  - longText('payload')
+  - integer('last_activity')->index()
+
+------------------------------
+
+Table: cache
+Structure:
+  - string('key')->primary()
+  - mediumText('value')
+  - integer('expiration')
+
+------------------------------
+
+Table: cache_locks
+Structure:
+  - string('key')->primary()
+  - string('owner')
+  - integer('expiration')
+
+------------------------------
+
+Table: jobs
+Structure:
+  - id()
+  - string('queue')->index()
+  - longText('payload')
+  - unsignedTinyInteger('attempts')
+  - unsignedInteger('reserved_at')->nullable()
+  - unsignedInteger('available_at')
+  - unsignedInteger('created_at')
+
+------------------------------
+
+Table: job_batches
+Structure:
+  - string('id')->primary()
+  - string('name')
+  - integer('total_jobs')
+  - integer('pending_jobs')
+  - integer('failed_jobs')
+  - longText('failed_job_ids')
+  - mediumText('options')->nullable()
+  - integer('cancelled_at')->nullable()
+  - integer('created_at')
+  - integer('finished_at')->nullable()
+
+------------------------------
+
+Table: failed_jobs
+Structure:
+  - id()
+  - string('uuid')->unique()
+  - text('connection')
+  - text('queue')
+  - longText('payload')
+  - longText('exception')
+  - timestamp('failed_at')->useCurrent()
+
+------------------------------
+
+Table: levels
+Structure:
+  - id()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('name')
+  - string('alias')->nullable()
+  - timestamps()
+  - unique(['name', 'school_id'])
+
+------------------------------
+
+Table: students
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('nis'); // Removed ->unique() - will be unique per school
+  - string('full_name')
+  - foreignUlid('parent_user_id')->constrained('users')->cascadeOnDelete()
+  - foreignId('level_id')->nullable()->constrained('levels')->nullOnDelete()
+  - decimal('wallet_balance', 15, 2)->default(0)
+  - string('wallet_pin')->nullable()
+  - decimal('daily_cash_limit', 10, 2)->default(50000); // Only for CASH_WITHDRAWAL
+  - boolean('allow_transaction')->default(true)->index()
+  - enum('status', ['ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED_OUT'])
+  - enum('gender', ['L', 'P'])
+  - date('birth_date')->nullable()
+  - text('photo_url')->nullable()
+  - timestamps()
+  - unique(['nis', 'school_id'])
+
+------------------------------
+
+Table: events
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('title')
+  - text('description')
+  - date('event_date')
+  - time('start_time')
+  - time('end_time')->nullable()
+  - boolean('is_paid')->default(false)
+  - decimal('amount', 15, 2)->nullable()
+  - enum('participation_type', ['MANDATORY', 'OPTIONAL'])
+  - timestamps()
+
+------------------------------
+
+Table: bill_categories
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('name')
+  - text('description')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: bills
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - foreignUlid('bill_category_id')->nullable()->constrained('bill_categories')->cascadeOnDelete()
+  - foreignUlid('event_id')->nullable()->constrained('events')->cascadeOnDelete()
+  - string('title')
+  - string('bill_code')->nullable()->index(); // For bulk tracking
+  - enum('type', ['SPP', 'EVENT', 'REGISTRATION', 'OTHER'])
+  - decimal('amount', 15, 2)
+  - enum('status', ['UNPAID', 'PAID', 'CANCELLED'])
+  - date('due_date')
+  - dateTime('paid_at')->nullable()
+  - string('payment_method')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: wallet_transactions
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('invoice_code')->unique()
+  - foreignUlid('student_id')->nullable()->constrained('students')->cascadeOnDelete()
+  - foreignUlid('operator_id')->nullable()->constrained('users')
+  - foreignUlid('pic_user_id')->constrained('users')->cascadeOnDelete()
+  - enum('type', ['CREDIT', 'DEBIT'])
+  - enum('category', ['TOPUP', 'WITHDRAWAL', 'PURCHASE', 'DEPOSIT_TO_HQ'])
+  - decimal('amount', 15, 2)
+  - string('description')
+  - enum('payment_method', ['gateway', 'cash', 'balance', 'payment_gateway'])->default('gateway')
+  - timestamps()
+
+------------------------------
+
+Table: attendances
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - date('date')
+  - time('clock_in')->nullable()
+  - enum('status', ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'])
+  - timestamps()
+
+------------------------------
+
+Table: event_attendances
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('event_id')->constrained('events')->cascadeOnDelete()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - dateTime('check_in_time')
+  - enum('status', ['PRESENT', 'LATE'])
+  - timestamps()
+
+------------------------------
+
+Table: settings
+Structure:
+  - id()
+  - foreignUlid('school_id')->nullable()->constrained()->cascadeOnDelete()
+  - string('key')->index()
+  - text('value')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: activities
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - foreignId('level_id')->nullable()->constrained()->cascadeOnDelete()
+  - string('name')
+  - string('type')->default('daily'); // daily, rutinan
+  - text('description')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: activity_attendances
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - foreignUlid('student_id')->constrained()->cascadeOnDelete()
+  - foreignUlid('activity_id')->constrained()->cascadeOnDelete()
+  - date('date')
+  - string('status'); // present, late, absent, permission
+  - text('remarks')->nullable()
+  - timestamps()
+  - unique(['student_id', 'activity_id', 'date'], 'student_activity_day_unique')
+
+------------------------------
+
+Table: event_level
+Structure:
+  - id()
+  - foreignUlid('event_id')->constrained()->cascadeOnDelete()
+  - foreignId('level_id')->constrained()->cascadeOnDelete()
+  - timestamps()
+  - unique(['event_id', 'level_id'])
+
+------------------------------
+
+Table: admin_deposits
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - foreignUlid('user_id')->constrained('users')->cascadeOnDelete()
+  - decimal('amount', 15, 2)
+  - string('proof_image')->nullable()
+  - enum('status', ['pending', 'confirmed', 'rejected'])->default('pending')
+  - timestamp('deposited_at')
+  - timestamp('confirmed_at')->nullable()
+  - text('notes')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: payment_channels
+Structure:
+  - id()
+  - string('code')->unique(); // e.g., 'bca_va', 'gopay'
+  - string('name'); // e.g., 'BCA Virtual Account'
+  - enum('type', ['VIRTUAL_ACCOUNT', 'E_WALLET', 'RETAIL_STORE', 'CARD', 'QRIS'])
+  - decimal('fee_flat', 10, 2)->default(0)
+  - decimal('fee_percent', 5, 2)->default(0); // e.g., 2.50 for 2.5%
+  - boolean('is_active')->default(true)
+  - string('icon')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: feedback
+Structure:
+  - id()
+  - foreignUlid('user_id')->nullable()->constrained()->nullOnDelete()
+  - string('sender_name')
+  - string('email')->nullable()
+  - string('phone')->nullable()
+  - enum('category', ['fasilitas', 'akademik', 'layanan'])
+  - text('message')
+  - text('admin_reply')->nullable()
+  - timestamp('replied_at')->nullable()
+  - boolean('is_read')->default(false)
+  - timestamps()
+
+------------------------------
+
+Table: achievements
+Structure:
+  - id()
+  - string('title')
+  - foreignUlid('student_id')->nullable()->constrained()->nullOnDelete()
+  - date('date_achieved')
+  - text('description')
+  - json('images')
+  - timestamps()
+
+------------------------------
+
+Table: video_lectures
+Structure:
+  - id()
+  - string('title')
+  - string('youtube_url')
+  - text('description')->nullable()
+  - date('published_at')
+  - timestamps()
+
+------------------------------
+
+Table: sowan_schedules
+Structure:
+  - id()
+  - string('guest_name')
+  - dateTime('request_date')
+  - text('topic')
+  - enum('status', ['pending', 'confirmed', 'completed'])->default('pending')
+  - timestamps()
+
+------------------------------
+
+Table: student_permissions
+Structure:
+  - id()
+  - string('student_name')
+  - text('reason')
+  - date('start_date')
+  - date('end_date')
+  - enum('status', ['pending', 'approved', 'rejected'])->default('pending')
+  - text('admin_note')->nullable()
+  - timestamps()
+
+------------------------------
+
+Table: departments
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('name'); // e.g., "Madrasah Ibtidaiyah"
+  - string('code')->nullable(); // e.g., "MI", "MTs"
+  - text('description')->nullable()
+  - timestamps()
+  - unique(['school_id', 'code'])
+
+------------------------------
+
+Table: academic_years
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('name'); // e.g., "2024/2025"
+  - date('start_date')->nullable()
+  - date('end_date')->nullable()
+  - boolean('is_active')->default(false)
+  - timestamps()
+  - unique(['school_id', 'name'])
+
+------------------------------
+
+Table: student_academics
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - foreignId('level_id')->nullable()->constrained('levels')->nullOnDelete(); // The level this history record sits in
+  - foreignUlid('academic_year_id')->constrained('academic_years')->cascadeOnDelete()
+  - string('semester')->nullable(); // 'ODD', 'EVEN', or null
+  - decimal('average_grade', 5, 2)->nullable()
+  - integer('rank')->nullable()
+  - text('notes')->nullable()
+  - enum('status', ['ONGOING', 'PROMOTED', 'RETAINED', 'GRADUATED', 'TRANSFERRED'])->default('ONGOING')
+  - timestamps()
+
+------------------------------
+
+Table: semesters
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('academic_year_id')
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - enum('type', ['GANJIL', 'GENAP'])
+  - date('start_date')
+  - date('end_date')
+  - timestamps()
+  - unique(['academic_year_id', 'type'])
+
+------------------------------
+
+Table: student_reports
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('student_id')
+  - foreignUlid('semester_id')
+  - foreignUlid('school_id')->constrained()->cascadeOnDelete()
+  - string('file_path')
+  - foreignUlid('uploaded_by')->constrained('users')
+  - timestamps()
+  - unique(['student_id', 'semester_id'])
+
+------------------------------
+
+Table: academic_promotions_log
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - foreignUlid('from_academic_year_id')->constrained('academic_years')->cascadeOnDelete()
+  - foreignUlid('to_academic_year_id')->nullable()->constrained('academic_years')->cascadeOnDelete()
+  - enum('action', ['PROMOTE', 'RETAIN', 'GRADUATE', 'TRANSFER_OUT'])
+  - foreignUlid('executed_by')->nullable()->constrained('users')->nullOnDelete()
+  - timestamp('executed_at')
+  - foreignId('from_level_id')->nullable()->constrained('levels')->nullOnDelete()
+  - foreignId('to_level_id')->nullable()->constrained('levels')->nullOnDelete()
+  - timestamps()
+
+------------------------------
+
+Table: student_cards
+Structure:
+  - ulid('id')->primary()
+  - foreignUlid('student_id')->constrained('students')->cascadeOnDelete()
+  - foreignUlid('issued_by')->constrained('users')->cascadeOnDelete()
+  - string('card_number')->unique()
+  - date('issued_at')
+  - date('expires_at')
+  - timestamps()
+
+------------------------------
+
