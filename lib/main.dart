@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/splash/splash_screen.dart';
 
-void main() {
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
+  await initializeDateFormatting('id_ID', null);
   runApp(const PesantrenApp());
 }
 
@@ -59,6 +62,12 @@ class PesantrenApp extends StatelessWidget {
             horizontal: 16,
             vertical: 16,
           ),
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
         ),
       ),
       home: const SplashScreen(),
