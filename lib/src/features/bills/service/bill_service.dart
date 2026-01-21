@@ -1,5 +1,7 @@
 import 'package:pesantren_mobile/src/features/bills/models/bill_model.dart';
 
+/// Service to handle bill data retrieval.
+/// Currently uses mock data for development.
 class BillService {
   // Mock Data
   static final BillCategory _sppCategory = BillCategory(
