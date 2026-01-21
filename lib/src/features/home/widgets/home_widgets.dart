@@ -1,60 +1,176 @@
 import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
 
-class SantriHeader extends StatelessWidget {
-  final SantriModel santri;
+class SantriHeader extends StatefulWidget {
+  final List<SantriModel> santriList;
+  final SantriModel activeSantri;
+  final ValueChanged<SantriModel> onSantriChanged;
   final VoidCallback onSwitchTap;
 
   const SantriHeader({
     super.key,
-    required this.santri,
+    required this.santriList,
+    required this.activeSantri,
+    required this.onSantriChanged,
     required this.onSwitchTap,
   });
 
   @override
+  State<SantriHeader> createState() => _SantriHeaderState();
+}
+
+class _SantriHeaderState extends State<SantriHeader> {
+  late PageController _pageController;
+  // Track scroll position to animate stacking
+  double _currentPage = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = widget.santriList.indexWhere(
+      (s) => s.id == widget.activeSantri.id,
+    );
+    _currentPage = (initialIndex != -1 ? initialIndex : 0).toDouble();
+    _pageController =
+        PageController(
+          initialPage: initialIndex != -1 ? initialIndex : 0,
+          viewportFraction: 0.85,
+        )..addListener(() {
+          setState(() {
+            _currentPage = _pageController.page ?? 0.0;
+          });
+        });
+  }
+
+  @override
+  void didUpdateWidget(SantriHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeSantri.id != widget.activeSantri.id) {
+      final index = widget.santriList.indexWhere(
+        (s) => s.id == widget.activeSantri.id,
+      );
+      if (index != -1 && _pageController.hasClients) {
+        if (_pageController.page?.round() != index) {
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+      padding: const EdgeInsets.only(top: 50, bottom: 20),
+      // Extend background to cover the stacked cards if needed,
+      // but simpler to just let them overflow if clipped correctly.
       decoration: const BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Assalamualaikum,",
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Wali Santri",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Assalamualaikum,",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Wali Santri",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                CircleAvatar(
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  radius: 22,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Stacked Card Carousel
+          SizedBox(
+            height: 220,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.santriList.length,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                widget.onSantriChanged(widget.santriList[index]);
+              },
+              itemBuilder: (context, index) {
+                // Determine transform based on position relative to current page
+                double relativePosition = index - _currentPage;
+
+                // Center zoom effect
+                double scale = (1 - (relativePosition.abs() * 0.2)).clamp(
+                  0.85,
+                  1.0,
+                );
+
+                return Center(
+                  child: Transform.scale(
+                    scale: Curves.easeOut.transform(scale),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: StudentIdCard(
+                        santri: widget.santriList[index],
+                        onSwitchTap: widget.onSwitchTap,
+                      ),
                     ),
                   ),
-                ],
-              ),
-              CircleAvatar(
-                backgroundColor: AppColors.accent,
-                radius: 20,
-                child: const Icon(Icons.person, color: AppColors.primary),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 24),
 
-          // Santri Card
-          StudentIdCard(santri: santri, onSwitchTap: onSwitchTap),
+          const SizedBox(height: 16),
+
+          // Page Indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.santriList.length, (index) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentPage.round() == index ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _currentPage.round() == index
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
         ],
       ),
     );
@@ -73,381 +189,209 @@ class StudentIdCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Colors from HTML/Tailwind config
+    // Keep original emerald colors
     const bgEmerald50 = Color(0xFFECFDF5);
     const bgEmerald100 = Color(0xFFD1FAE5);
-    const textEmerald800 = Color(0xFF065F46);
+    const textEmerald800 = Color(0xFF065F46); // Dark Green Text
     const textEmerald600 = Color(0xFF059669);
-    const textEmerald500 = Color(0xFF10B981); // Adjusted for visibility
-    const textEmerald700 = Color(0xFF047857);
 
-    return Container(
-      width: double.infinity,
-      height: 240, // Increased height to prevent overflow with larger logo
-      decoration: BoxDecoration(
-        color: bgEmerald50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: bgEmerald50),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Background Decorations
-          Positioned.fill(
-            child: Stack(
-              children: [
-                // Middle Accent (Skewed)
-                Positioned(
-                  top: 0,
-                  right: 80, // Approximate percentage
-                  bottom: 0,
-                  width: 60,
-                  child: Transform(
-                    transform: Matrix4.skewX(-0.2), // -12 deg approx
-                    child: Container(color: bgEmerald100.withOpacity(0.6)),
-                  ),
-                ),
-                // Right Layer (Cover)
-                Positioned(
-                  top: 0,
-                  right: -40,
-                  bottom: 0,
-                  width: 150,
-                  child: Transform(
-                    transform: Matrix4.skewX(-0.2),
-                    child: Container(color: bgEmerald50),
-                  ),
-                ),
-                // Glassy Line
-                Positioned(
-                  top: 0,
-                  right: 80,
-                  bottom: 0,
-                  width: 1,
-                  child: Transform(
-                    transform: Matrix4.skewX(-0.2),
-                    child: Container(color: Colors.white.withOpacity(0.4)),
-                  ),
-                ),
-              ],
+    // Simulate "Credit Card" Layout
+    // ISO/IEC 7810 ID-1 standard: 85.60 × 53.98 mm
+    // Aspect Ratio: 8.56 / 5.398 ≈ 1.585
+    return AspectRatio(
+      aspectRatio: 85.60 / 53.98,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: bgEmerald50,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
-          ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Background Pattern (Waves)
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: bgEmerald100.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -80,
+              left: -30,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  color: bgEmerald100.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
 
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // LEFT COLUMN: Photo and NIS
-                Column(
-                  children: [
-                    // Photo Container
-                    Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        Container(
-                          width: 88,
-                          height: 108,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFFF9FAFB), Color(0xFFF3F4F6)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white, width: 3),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+            // Card Content
+            Padding(
+              padding: const EdgeInsets.all(20.0), // Reduced from 24
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Header: Logo Left, Badge Right
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Small Logo
+                      Image.asset('assets/logo.png', width: 60, height: 60),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "PESANTREN ID",
+                              style: TextStyle(
+                                color: textEmerald800,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic,
                               ),
-                            ],
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: santri.photoUrl != null
-                              ? Image.network(
-                                  santri.photoUrl!,
-                                  fit: BoxFit.cover,
-                                )
-                              : Center(
-                                  child: Text(
-                                    santri.nama.isNotEmpty
-                                        ? santri.nama[0].toUpperCase()
-                                        : "?",
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                            ),
+                            Text(
+                              "Kartu Tanda Santri Elektronik",
+                              style: TextStyle(
+                                color: textEmerald600,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        // NIS Badge (Floating)
-                        Transform.translate(
-                          offset: const Offset(0, 10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.95),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: bgEmerald100.withOpacity(0.8),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "123456", // Todo: Add NIS to model or use placeholder
+                      ),
+                      // "Active" Badge or similar
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 4),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.verified, size: 14, color: Colors.blue),
+                            SizedBox(width: 4),
+                            Text(
+                              "Active",
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: textEmerald700,
-                                letterSpacing: 1,
+                                color: Colors.blue,
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const Spacer(),
-                    // Footer
-                    Column(
-                      children: [
-                        Text(
-                          "KARTU TANDA SANTRI",
-                          style: TextStyle(
-                            fontSize: 7,
-                            fontWeight: FontWeight.bold,
-                            color: textEmerald800.withOpacity(0.6),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        Text(
-                          "Berlaku selama menjadi santri",
-                          style: TextStyle(
-                            fontSize: 6,
-                            color: textEmerald600.withOpacity(0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                // RIGHT COLUMN: Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "KARTU SANTRI",
-                                style: TextStyle(
-                                  color: textEmerald800,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  letterSpacing: 0.5,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                "PONDOK PESANTREN",
-                                style: TextStyle(
-                                  color: textEmerald500,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 10,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Logo Asset
-                          SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: Image.asset(
-                              'assets/logo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8), // Tightened spacing
-                      // Data Fields
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel("NAMA LENGKAP"),
-                          Text(
-                            santri.nama,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Color(0xFF111827), // Gray-900
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 4), // Reduced spacing
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel("JENJANG"),
-                                    Text(
-                                      santri
-                                          .kelas, // Using kelas as jenjang placeholder
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel("JENIS KELAMIN"),
-                                    Text(
-                                      santri.jenisKelamin,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Spacer(), // Push barcode to bottom
-                      const SizedBox(height: 8), // Tightened bottom spacing
-                      // Barcode & Ganti Button
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Barcode visual (Full width simulation)
-                          Expanded(
-                            child: SizedBox(
-                              height: 32, // Slightly reduced
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(36, (index) {
-                                  // Randomize bar width slightly for realism
-                                  final isThick =
-                                      (index * 7 + 3) % 4 == 0 ||
-                                      index % 5 == 0;
-                                  return Container(
-                                    width: isThick ? 2.5 : 1,
-                                    height: 32,
-                                    margin: EdgeInsets.symmetric(
-                                      horizontal: isThick ? 1.5 : 1,
-                                    ),
-                                    color: Colors.black87,
-                                  );
-                                }),
-                              ),
-                            ),
-                          ),
-                          // Ganti Button
-                          InkWell(
-                            onTap: onSwitchTap,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 2,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: const Row(
-                                children: [
-                                  Text(
-                                    "Ganti",
-                                    style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.keyboard_arrow_down,
-                                    size: 14,
-                                    color: AppColors.primary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 8,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
-          letterSpacing: 0.5,
+                  const Spacer(),
+
+                  // 2. Big Number (Like Credit Card)
+                  // Minimized size/spacing to fit 1 line
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "1000  4633  3308  ${santri.id.padLeft(4, '0')}",
+                      style: const TextStyle(
+                        fontFamily: 'Courier',
+                        fontSize: 18, // Reduced from 22
+                        fontWeight: FontWeight.bold,
+                        color: textEmerald800,
+                        letterSpacing: 1.5, // Reduced from 2.0
+                        shadows: [
+                          Shadow(
+                            blurRadius: 1,
+                            color: Colors.white,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // 3. Bottom Info: Name & School
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "NAMA SANTRI",
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: textEmerald600,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            santri.nama.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: textEmerald800,
+                            ),
+                          ),
+                          Text(
+                            santri.kelas,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: textEmerald600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // QR/Barcode Icon (Larger)
+                      Icon(
+                        Icons.qr_code_2,
+                        size: 64, // Increased from 40
+                        color: textEmerald800.withOpacity(0.8),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ... (existing imports)
+
+// ... (SantriHeader and other widgets remain unchanged)
 
 class DashboardCard extends StatelessWidget {
   final String title;
@@ -467,53 +411,68 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: (iconColor ?? AppColors.primary).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
-          ),
-          const Spacer(),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 11,
-                color: (iconColor ?? AppColors.primary),
-              ),
+    // Wrap with ScaleButton for feedback, even though it's not clickable by default in the mockup
+    // If it's intended to be clickable, we add onTap.
+    // Assuming these cards might be clickable later for details.
+    return ScaleButton(
+      onTap: () {
+        // Placeholder for future navigation
+      },
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (iconColor ?? AppColors.primary).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor ?? AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: (iconColor ?? AppColors.primary),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -533,7 +492,7 @@ class MenuIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return ScaleButton(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
