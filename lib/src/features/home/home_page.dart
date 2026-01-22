@@ -4,6 +4,10 @@ import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/home_widgets.dart';
 import 'package:pesantren_mobile/src/features/bills/bills_list_page.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
+import 'package:pesantren_mobile/src/features/achievements/achievements_page.dart';
+import 'package:pesantren_mobile/src/features/reports/student_report_page.dart';
+import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
+import 'package:pesantren_mobile/src/features/activities/activities_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -157,20 +161,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
-
-                    // 3. Main Menu
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        "Menu Utama",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24), // Reduced spacing
+                    // 3. Main Menu (No Title, Colorful Icons)
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -180,16 +172,40 @@ class _HomePageState extends State<HomePage> {
                         MenuIcon(
                           label: "Rapor",
                           icon: Icons.school,
-                          onTap: () {},
+                          backgroundColor: Colors.purple.shade50,
+                          iconColor: Colors.purple,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StudentReportPage(
+                                  activeSantri: _activeSantri,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         MenuIcon(
                           label: "Prestasi",
                           icon: Icons.emoji_events,
-                          onTap: () {},
+                          backgroundColor: Colors.orange.shade50,
+                          iconColor: Colors.orange,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AchievementsPage(
+                                  activeSantri: _activeSantri,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         MenuIcon(
                           label: "Tagihan",
                           icon: Icons.receipt_long,
+                          backgroundColor: Colors.green.shade50,
+                          iconColor: Colors.green,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -203,6 +219,8 @@ class _HomePageState extends State<HomePage> {
                         MenuIcon(
                           label: "Riwayat",
                           icon: Icons.history,
+                          backgroundColor: Colors.blue.shade50,
+                          iconColor: Colors.blue,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -217,21 +235,44 @@ class _HomePageState extends State<HomePage> {
                         MenuIcon(
                           label: "Perizinan",
                           icon: Icons.mail_outline,
+                          backgroundColor: Colors.pink.shade50,
+                          iconColor: Colors.pink,
                           onTap: () {},
                         ),
                         MenuIcon(
                           label: "Jadwal",
                           icon: Icons.calendar_today,
-                          onTap: () {},
+                          backgroundColor: Colors.teal.shade50,
+                          iconColor: Colors.teal,
+                          onTap: () {
+                            // Correct navigation to ActivitiesPage
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ActivitiesPage(),
+                              ),
+                            );
+                          },
                         ),
                         MenuIcon(
                           label: "Kajian",
                           icon: Icons.menu_book,
-                          onTap: () {},
+                          backgroundColor: Colors.red.shade50,
+                          iconColor: Colors.red,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const KajianPage(),
+                              ),
+                            );
+                          },
                         ),
                         MenuIcon(
                           label: "Lainnya",
                           icon: Icons.grid_view,
+                          backgroundColor: Colors.grey.shade100,
+                          iconColor: Colors.grey.shade700,
                           onTap: () {},
                         ),
                       ],
@@ -239,18 +280,7 @@ class _HomePageState extends State<HomePage> {
 
                     const SizedBox(height: 24),
 
-                    // 4. Information Section
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        "Informasi Terbaru",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    // 4. Information Slider
                     _isLoadingContent
                         ? const Center(
                             child: Padding(
@@ -258,7 +288,7 @@ class _HomePageState extends State<HomePage> {
                               child: CircularProgressIndicator(),
                             ),
                           )
-                        : _buildInfoList(),
+                        : const InfoSlider(),
 
                     const SizedBox(height: 40),
                   ],
@@ -268,47 +298,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoList() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: 2,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(12),
-            leading: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.image, color: Colors.grey),
-            ),
-            title: Text(
-              index == 0
-                  ? "Pengumuman Libur Semester"
-                  : "Jadwal Kajian Bulanan",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            subtitle: const Text(
-              "20 Januari 2026",
-              style: TextStyle(fontSize: 12),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-          ),
-        );
-      },
     );
   }
 }
