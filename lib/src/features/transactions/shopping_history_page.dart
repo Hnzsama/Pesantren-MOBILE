@@ -72,6 +72,22 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // 1. Fixed Pattern Background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.40,
+              child: Image.asset('assets/background.jpeg', fit: BoxFit.cover),
+            ),
+          ),
+
+          // 2. Main Content
+          Container(), // Placeholder
+        ],
+      ),
+    );
   }
 }
