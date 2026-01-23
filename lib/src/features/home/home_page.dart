@@ -10,6 +10,7 @@ import 'package:pesantren_mobile/src/features/activities/activities_page.dart';
 import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/transactions/shopping_history_page.dart';
+import 'package:pesantren_mobile/src/features/profile/profile_page.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -354,6 +355,13 @@ class _HomePageState extends State<HomePage> {
               onViewHistory: () => setState(() => _showPaymentHistory = true),
               onBack: () => setState(() => _navIndex = 0),
             );
+    }
+
+    if (_navIndex == 3) {
+      return ProfilePage(
+        activeSantri: _activeSantri,
+        onBack: () => setState(() => _navIndex = 0),
+      );
     }
 
     if (_currentHomeSubPage != null) {
