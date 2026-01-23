@@ -8,6 +8,7 @@ import 'package:pesantren_mobile/src/features/achievements/achievements_page.dar
 import 'package:pesantren_mobile/src/features/reports/student_report_page.dart';
 import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
 import 'package:pesantren_mobile/src/features/activities/activities_page.dart';
+import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   // State Management
   late SantriModel _activeSantri;
   bool _isLoadingContent = false;
+  int _navIndex = 0;
 
   @override
   void initState() {
@@ -87,214 +89,269 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
+      extendBody: true, // Allow body to extend behind bottom nav
+      bottomNavigationBar: GlassBottomNav(
+        selectedIndex: _navIndex,
+        onItemTapped: (index) => setState(() => _navIndex = index),
+      ),
+      body: Stack(
         children: [
-          // 1. Header with Switcher
-          SantriHeader(
-            santriList: MockData.santriList,
-            activeSantri: _activeSantri,
-            onSantriChanged: (santri) {
-              // Avoid redundant rebuilds if the santri is the same
-              if (_activeSantri.id != santri.id) {
-                // We don't perform a full "switch" (which closes modal/shows snackbar)
-                // Just update the active santri state quietly for the swipe
-                setState(() => _activeSantri = santri);
-                _loadContent();
-              }
-            },
-            onSwitchTap: _showSantriSwitcher,
-          ),
-
-          // Wrapped in Expanded to take remaining space
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.05, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: SingleChildScrollView(
-                // Key forces the widget to be replaced (and thus animated) when santri changes
-                key: ValueKey<String>(_activeSantri.id),
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-
-                    // 2. Quick Stats Cards
-                    SizedBox(
-                      height: 140,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: [
-                          DashboardCard(
-                            title: "Kehadiran",
-                            value: "${_activeSantri.kehadiranPercentage}%",
-                            subtitle: _activeSantri.kehadiranStatus,
-                            icon: Icons.access_time_filled,
-                            iconColor: _activeSantri.kehadiranStatus == 'Sakit'
-                                ? Colors.orange
-                                : AppColors.primary,
-                          ),
-                          const SizedBox(width: 16),
-                          DashboardCard(
-                            title: "Uang Saku",
-                            value: "Rp ${_activeSantri.uangSaku.toInt()}",
-                            subtitle: "Saldo Aktif",
-                            icon: Icons.account_balance_wallet,
-                            iconColor: AppColors.accentDark,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24), // Reduced spacing
-                    // 3. Main Menu (No Title, Colorful Icons)
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 4,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      children: [
-                        MenuIcon(
-                          label: "Rapor",
-                          icon: Icons.school,
-                          backgroundColor: Colors.purple.shade50,
-                          iconColor: Colors.purple,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => StudentReportPage(
-                                  activeSantri: _activeSantri,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Prestasi",
-                          icon: Icons.emoji_events,
-                          backgroundColor: Colors.orange.shade50,
-                          iconColor: Colors.orange,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AchievementsPage(
-                                  activeSantri: _activeSantri,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Tagihan",
-                          icon: Icons.receipt_long,
-                          backgroundColor: Colors.green.shade50,
-                          iconColor: Colors.green,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    BillsListPage(activeSantri: _activeSantri),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Riwayat",
-                          icon: Icons.history,
-                          backgroundColor: Colors.blue.shade50,
-                          iconColor: Colors.blue,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PaymentHistoryPage(
-                                  activeSantri: _activeSantri,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Perizinan",
-                          icon: Icons.mail_outline,
-                          backgroundColor: Colors.pink.shade50,
-                          iconColor: Colors.pink,
-                          onTap: () {},
-                        ),
-                        MenuIcon(
-                          label: "Jadwal",
-                          icon: Icons.calendar_today,
-                          backgroundColor: Colors.teal.shade50,
-                          iconColor: Colors.teal,
-                          onTap: () {
-                            // Correct navigation to ActivitiesPage
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ActivitiesPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Kajian",
-                          icon: Icons.menu_book,
-                          backgroundColor: Colors.red.shade50,
-                          iconColor: Colors.red,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const KajianPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        MenuIcon(
-                          label: "Lainnya",
-                          icon: Icons.grid_view,
-                          backgroundColor: Colors.grey.shade100,
-                          iconColor: Colors.grey.shade700,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // 4. Information Slider
-                    _isLoadingContent
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : const InfoSlider(),
-
-                    const SizedBox(height: 40),
-                  ],
-                ),
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.background,
+                  AppColors.primary.withOpacity(0.05),
+                  AppColors.primary.withOpacity(0.1),
+                ],
               ),
             ),
+          ),
+
+          // Pattern Overlay (Mandala)
+          Positioned(
+            top: 200, // Lowered to be visible below header
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Opacity(
+              opacity: 0.3,
+              child: Image.asset(
+                'assets/background.png',
+                fit: BoxFit.contain,
+                alignment: const Alignment(
+                  -0.5,
+                  -1.0,
+                ), // Shift left (was topCenter)
+              ),
+            ),
+          ),
+
+          // Main Content
+          Column(
+            children: [
+              // 1. Header with Switcher
+              SantriHeader(
+                santriList: MockData.santriList,
+                activeSantri: _activeSantri,
+                onSantriChanged: (santri) {
+                  // Avoid redundant rebuilds if the santri is the same
+                  if (_activeSantri.id != santri.id) {
+                    // We don't perform a full "switch" (which closes modal/shows snackbar)
+                    // Just update the active santri state quietly for the swipe
+                    setState(() => _activeSantri = santri);
+                    _loadContent();
+                  }
+                },
+                onSwitchTap: _showSantriSwitcher,
+              ),
+
+              // Wrapped in Expanded to take remaining space
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.05, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                  child: SingleChildScrollView(
+                    // Key forces the widget to be replaced (and thus animated) when santri changes
+                    key: ValueKey<String>(_activeSantri.id),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+
+                        // 2. Quick Stats Cards (Expanded to fill width)
+                        SizedBox(
+                          height: 140,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: DashboardCard(
+                                    title: "Kehadiran",
+                                    value:
+                                        "${_activeSantri.kehadiranPercentage}%",
+                                    subtitle: _activeSantri.kehadiranStatus,
+                                    icon: Icons.access_time_filled,
+                                    iconColor:
+                                        _activeSantri.kehadiranStatus == 'Sakit'
+                                        ? Colors.orange
+                                        : AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: DashboardCard(
+                                    title: "Uang Saku",
+                                    value:
+                                        "Rp ${_activeSantri.uangSaku.toInt()}",
+                                    subtitle: "Saldo Aktif",
+                                    icon: Icons.account_balance_wallet,
+                                    iconColor: AppColors.accentDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24), // Reduced spacing
+                        // 3. Main Menu (No Title, Colorful Icons)
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 16, // Added spacing
+                          crossAxisSpacing: 12, // Added spacing
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          children: [
+                            MenuIcon(
+                              label: "Rapor",
+                              icon: Icons.school,
+                              backgroundColor: Colors.purple.shade50,
+                              iconColor: Colors.purple,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => StudentReportPage(
+                                      activeSantri: _activeSantri,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Prestasi",
+                              icon: Icons.emoji_events,
+                              backgroundColor: Colors.orange.shade50,
+                              iconColor: Colors.orange,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AchievementsPage(
+                                      activeSantri: _activeSantri,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Tagihan",
+                              icon: Icons.receipt_long,
+                              backgroundColor: Colors.green.shade50,
+                              iconColor: Colors.green,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BillsListPage(
+                                      activeSantri: _activeSantri,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Riwayat",
+                              icon: Icons.history,
+                              backgroundColor: Colors.blue.shade50,
+                              iconColor: Colors.blue,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PaymentHistoryPage(
+                                      activeSantri: _activeSantri,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Perizinan",
+                              icon: Icons.mail_outline,
+                              backgroundColor: Colors.pink.shade50,
+                              iconColor: Colors.pink,
+                              onTap: () {},
+                            ),
+                            MenuIcon(
+                              label: "Jadwal",
+                              icon: Icons.calendar_today,
+                              backgroundColor: Colors.teal.shade50,
+                              iconColor: Colors.teal,
+                              onTap: () {
+                                // Correct navigation to ActivitiesPage
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ActivitiesPage(),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Kajian",
+                              icon: Icons.menu_book,
+                              backgroundColor: Colors.red.shade50,
+                              iconColor: Colors.red,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const KajianPage(),
+                                  ),
+                                );
+                              },
+                            ),
+                            MenuIcon(
+                              label: "Lainnya",
+                              icon: Icons.grid_view,
+                              backgroundColor: Colors.grey.shade100,
+                              iconColor: Colors.grey.shade700,
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // 4. Information Slider
+                        _isLoadingContent
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : const InfoSlider(),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

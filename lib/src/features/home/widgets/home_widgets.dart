@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
+import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
 
 class SantriHeader extends StatefulWidget {
   final List<SantriModel> santriList;
@@ -72,12 +73,26 @@ class _SantriHeaderState extends State<SantriHeader> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 50, bottom: 20),
+      padding: const EdgeInsets.only(
+        top: 40,
+        bottom: 16,
+      ), // Reduced padding (was 50, 20)
       // Extend background to cover the stacked cards if needed,
       // but simpler to just let them overflow if clipped correctly.
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.primary, AppColors.primaryDark],
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +132,7 @@ class _SantriHeaderState extends State<SantriHeader> {
 
           // Stacked Card Carousel
           SizedBox(
-            height: 220,
+            height: 190, // Reduced height (was 220)
             child: PageView.builder(
               controller: _pageController,
               itemCount: widget.santriList.length,
@@ -238,6 +253,24 @@ class StudentIdCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: bgEmerald100.withOpacity(0.5),
                   shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            // Shine Effect (Subtle Overlay)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.0),
+                    ],
+                    stops: const [0.0, 0.4, 1.0],
+                  ),
                 ),
               ),
             ),
@@ -418,20 +451,25 @@ class DashboardCard extends StatelessWidget {
       onTap: () {
         // Placeholder for future navigation
       },
-      child: Container(
-        width: 150,
+      child: GlassContainer(
+        width: double.infinity, // Fill available width (Expanded)
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(20),
+        blur: 10,
+        opacity: 0.95, // Almost opaque for "card" feel
+        shadows: [
+          // Glow effect matching the icon color
+          BoxShadow(
+            color: (iconColor ?? AppColors.primary).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -501,15 +539,21 @@ class MenuIcon extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12), // Reduced padding slightly
-            decoration: BoxDecoration(
-              color: backgroundColor ?? AppColors.background,
-              borderRadius: BorderRadius.circular(
-                16,
-              ), // Rounded square/squircle
+          GlassContainer(
+            width: 56, // Fixed width for square
+            height: 56, // Fixed height for square
+            padding: EdgeInsets.zero,
+            borderRadius: BorderRadius.circular(18),
+            color: backgroundColor ?? AppColors.background,
+            blur: 10,
+            opacity: 0.9,
+            child: Center(
+              child: Icon(
+                icon,
+                color: iconColor ?? AppColors.primary,
+                size: 24,
+              ),
             ),
-            child: Icon(icon, color: iconColor ?? AppColors.primary, size: 28),
           ),
           const SizedBox(height: 8),
           Text(
@@ -593,7 +637,7 @@ class _InfoSliderState extends State<InfoSlider> {
     return Column(
       children: [
         SizedBox(
-          height: 100, // Compact height
+          height: 120, // Increased height to prevent clipping
           child: PageView.builder(
             controller: _controller,
             onPageChanged: (index) {
