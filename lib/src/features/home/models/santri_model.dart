@@ -8,6 +8,8 @@ class SantriModel {
   final double kehadiranPercentage;
 
   final String jenisKelamin; // "Laki-laki" or "Perempuan"
+  final String? walletPin;
+  final double dailyCashLimit;
 
   const SantriModel({
     required this.id,
@@ -18,6 +20,8 @@ class SantriModel {
     required this.kehadiranStatus,
     required this.kehadiranPercentage,
     this.jenisKelamin = 'Laki-laki',
+    this.walletPin,
+    this.dailyCashLimit = 50000,
   });
 }
 
@@ -31,6 +35,8 @@ class MockData {
       kehadiranStatus: 'Hadir',
       kehadiranPercentage: 95.0,
       jenisKelamin: 'Laki-laki',
+      walletPin: '123456',
+      dailyCashLimit: 100000,
     ),
     SantriModel(
       id: '2',

@@ -42,7 +42,7 @@ class ProfilePage extends StatelessWidget {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  expandedHeight: 280,
+                  expandedHeight: 330,
                   pinned: true,
                   backgroundColor: AppColors.primary,
                   elevation: 0,
@@ -77,7 +77,7 @@ class ProfilePage extends StatelessWidget {
                                 ),
                               ),
                               child: CircleAvatar(
-                                radius: 50,
+                                radius: 45,
                                 backgroundColor: Colors.white,
                                 backgroundImage: activeSantri.photoUrl != null
                                     ? NetworkImage(activeSantri.photoUrl!)
@@ -85,7 +85,7 @@ class ProfilePage extends StatelessWidget {
                                 child: activeSantri.photoUrl == null
                                     ? const Icon(
                                         Icons.person,
-                                        size: 50,
+                                        size: 45,
                                         color: AppColors.primary,
                                       )
                                     : null,
@@ -102,24 +102,51 @@ class ProfilePage extends StatelessWidget {
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
-                                vertical: 4,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                "${activeSantri.kelas} • ${activeSantri.id.padLeft(4, '0')}", // Mock NIS
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1,
                                 ),
                               ),
+                              child: Text(
+                                "${activeSantri.kelas} • ${activeSantri.id.padLeft(4, '0')}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Header Stats
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildHeaderStat(
+                                  "Sisa Saldo",
+                                  "Rp ${(activeSantri.uangSaku / 1000).toStringAsFixed(0)}rb",
+                                ),
+                                Container(
+                                  height: 30,
+                                  width: 1,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildHeaderStat(
+                                  "Limit Harian",
+                                  "Rp ${(activeSantri.dailyCashLimit / 1000).toStringAsFixed(0)}rb",
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -252,7 +279,37 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+
+                  // SECTION: Pengaturan Keuangan (Financial Settings)
+                  _buildSectionTitle("Pengaturan Keuangan"),
+                  const SizedBox(height: 12),
+                  GlassContainer(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    borderRadius: BorderRadius.circular(24),
+                    child: Column(
+                      children: [
+                        _buildSettingsRow(
+                          context,
+                          icon: Icons.savings_outlined,
+                          title: "Limit Harian",
+                          value: "Rp ${activeSantri.dailyCashLimit.toInt()}",
+                          onTap: () => _showLimitDialog(context),
+                        ),
+                        const Divider(height: 24, thickness: 0.5),
+                        _buildSettingsRow(
+                          context,
+                          icon: Icons.password,
+                          title: "PIN Kartu",
+                          value: activeSantri.walletPin != null
+                              ? "****** (Diatur)"
+                              : "Belum Diatur",
+                          onTap: () => _showPinDialog(context),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   // LOGOUT BUTTON
                   SizedBox(
@@ -327,6 +384,30 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  Widget _buildHeaderStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInfoRow(
     IconData icon,
     String label,
@@ -373,6 +454,219 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSettingsRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: Colors.orange, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLimitDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Atur Limit Harian",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Batas maksimal jajan santri per hari menggunakan Smart Card.",
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              decoration: InputDecoration(
+                labelText: "Nominal Limit (Rp)",
+                prefixText: "Rp ",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+              keyboardType: TextInputType.number,
+              controller: TextEditingController(
+                text: "${activeSantri.dailyCashLimit.toInt()}",
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Limit harian berhasil disimpan"),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text("Simpan Perubahan"),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPinDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Ubah PIN Kartu",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "PIN digunakan untuk konfirmasi pembayaran di kantin.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: "PIN Baru (6 Digit)",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  prefixIcon: const Icon(Icons.lock_outline),
+                ),
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("PIN berhasil diperbarui")),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text("Simpan PIN Baru"),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
