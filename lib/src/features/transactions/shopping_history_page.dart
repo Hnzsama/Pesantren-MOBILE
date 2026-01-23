@@ -217,7 +217,94 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
                 ),
               ];
             },
-            body: Container(), // Placeholder
+            body: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: _transactions.length,
+              itemBuilder: (context, index) {
+                final transaction = _transactions[index];
+                final isExpense = transaction['type'] == 'expense';
+                final amount = transaction['amount'] as int;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isExpense
+                            ? const Color(0xFFFFEBEE)
+                            : const Color(0xFFE8F5E9), // Red 50 vs Green 50
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        isExpense
+                            ? Icons.shopping_bag_outlined
+                            : Icons.account_balance_wallet_outlined,
+                        color: isExpense
+                            ? const Color(0xFFF44336)
+                            : const Color(0xFF4CAF50),
+                      ),
+                    ),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          transaction['title'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          transaction['description'],
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          transaction['date'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Text(
+                      "${isExpense ? '' : '+'}Rp ${amount.abs().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isExpense
+                            ? const Color(0xFFF44336)
+                            : const Color(0xFF4CAF50),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
