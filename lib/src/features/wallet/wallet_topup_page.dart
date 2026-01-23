@@ -214,7 +214,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                           crossAxisCount: 3, // Changed to 3 columns
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          childAspectRatio: 1.8,
+                          childAspectRatio: 1.6,
                         ),
                     itemCount: _presetAmounts.length,
                     itemBuilder: (context, index) {
@@ -259,9 +259,10 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 24,
-                          vertical: 20,
+                          vertical: 18,
                         ),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -324,6 +325,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
