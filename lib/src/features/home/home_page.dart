@@ -542,15 +542,14 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 const Spacer(),
                                 GestureDetector(
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Riwayat Belanja akan segera hadir",
-                                        ),
+                                  onTap: () => _navigateTo(
+                                    ShoppingHistoryPage(
+                                      activeSantri: _activeSantri,
+                                      onBack: () => setState(
+                                        () => _currentHomeSubPage = null,
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  ),
                                   child: Text(
                                     "Lihat Semua",
                                     style: TextStyle(
