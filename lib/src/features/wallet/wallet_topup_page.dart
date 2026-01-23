@@ -93,7 +93,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  expandedHeight: 250, // Increased height for better spacing
+                  expandedHeight: 280, // Increased height for better spacing
                   pinned: true,
                   backgroundColor: AppColors.primary,
                   elevation: 0,
@@ -119,63 +119,99 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              "Saldo Saat Ini",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            // Balance Card
+                            // Premium Balance Card
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              margin: const EdgeInsets.symmetric(
                                 horizontal: 24,
-                                vertical: 12,
                               ),
+                              padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0.15),
+                                    Colors.white.withOpacity(0.05),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
                                   color: Colors.white.withOpacity(0.2),
                                 ),
-                              ),
-                              child: Text(
-                                "Rp ${widget.activeSantri.uangSaku.toInt()}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.person,
-                                    color: Colors.white70,
-                                    size: 16,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                  const SizedBox(width: 8),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    "Saldo Saat Ini",
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
                                   Text(
-                                    "${widget.activeSantri.nama} • ${widget.activeSantri.kelas}",
+                                    "Rp ${widget.activeSantri.uangSaku.toInt()}",
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 10,
+                                          backgroundColor: Colors.white,
+                                          backgroundImage:
+                                              widget.activeSantri.photoUrl !=
+                                                  null
+                                              ? NetworkImage(
+                                                  widget.activeSantri.photoUrl!,
+                                                )
+                                              : null,
+                                          child:
+                                              widget.activeSantri.photoUrl ==
+                                                  null
+                                              ? const Icon(
+                                                  Icons.person,
+                                                  size: 12,
+                                                  color: AppColors.primary,
+                                                )
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "${widget.activeSantri.nama} • ${widget.activeSantri.kelas}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
