@@ -310,6 +310,7 @@ class ProfilePage extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 48),
 
                   // LOGOUT BUTTON
                   SizedBox(
