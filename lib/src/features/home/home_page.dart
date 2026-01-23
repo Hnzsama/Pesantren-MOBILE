@@ -11,6 +11,7 @@ import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/transactions/shopping_history_page.dart';
 import 'package:pesantren_mobile/src/features/profile/profile_page.dart';
+import 'package:pesantren_mobile/src/features/permissions/permissions_page.dart';
 import 'package:pesantren_mobile/src/features/wallet/wallet_topup_page.dart';
 
 // ... existing imports ...
@@ -212,11 +213,11 @@ class _HomePageState extends State<HomePage> {
                           iconColor: const Color(0xFFE91E63), // Pink
                           onTap: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Menu Perizinan akan segera hadir",
-                                ),
+                            _navigateTo(
+                              PermissionsPage(
+                                activeSantri: _activeSantri,
+                                onBack: () =>
+                                    setState(() => _currentHomeSubPage = null),
                               ),
                             );
                           },
