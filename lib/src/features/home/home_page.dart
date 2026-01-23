@@ -11,6 +11,7 @@ import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/transactions/shopping_history_page.dart';
 import 'package:pesantren_mobile/src/features/profile/profile_page.dart';
+import 'package:pesantren_mobile/src/features/wallet/wallet_topup_page.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -257,11 +258,11 @@ class _HomePageState extends State<HomePage> {
                           iconColor: const Color(0xFF00BCD4), // Cyan
                           onTap: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Menu Uang Saku akan segera hadir",
-                                ),
+                            _navigateTo(
+                              WalletTopUpPage(
+                                activeSantri: _activeSantri,
+                                onBack: () =>
+                                    setState(() => _currentHomeSubPage = null),
                               ),
                             );
                           },
@@ -408,7 +409,42 @@ class _HomePageState extends State<HomePage> {
               // === TOP SECTION (Fixed Height roughly) ===
               const HomeGreeting(),
               const SizedBox(height: 10),
-              BalanceSection(balance: _activeSantri.uangSaku),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: BalanceSection(balance: _activeSantri.uangSaku),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    margin: const EdgeInsets.only(right: 20),
+                    child: Material(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () => _navigateTo(
+                          WalletTopUpPage(
+                            activeSantri: _activeSantri,
+                            onBack: () =>
+                                setState(() => _currentHomeSubPage = null),
+                          ),
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 30),
 
               // === BOTTOM SECTION (Expanded Floating Panel) ===
