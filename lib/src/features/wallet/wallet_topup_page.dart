@@ -298,7 +298,6 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                           vertical: 18,
                         ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: 32),
