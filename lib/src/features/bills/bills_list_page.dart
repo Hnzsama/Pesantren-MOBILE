@@ -4,6 +4,7 @@ import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/bills/models/bill_model.dart';
 import 'package:pesantren_mobile/src/features/bills/service/bill_service.dart';
 import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
+import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 
 /// Page for displaying unpaid bills (General and Event).
@@ -11,8 +12,14 @@ import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 class BillsListPage extends StatefulWidget {
   final SantriModel activeSantri;
   final VoidCallback? onBack; // Optional custom back behavior
+  final VoidCallback? onViewHistory;
 
-  const BillsListPage({super.key, required this.activeSantri, this.onBack});
+  const BillsListPage({
+    super.key,
+    required this.activeSantri,
+    this.onBack,
+    this.onViewHistory,
+  });
 
   @override
   State<BillsListPage> createState() => _BillsListPageState();
@@ -56,202 +63,220 @@ class _BillsListPageState extends State<BillsListPage>
 
   @override
   Widget build(BuildContext context) {
-    // Theme Constants matching Home
-    const bgEmerald50 = Color(0xFFECFDF5);
-
     return Scaffold(
-      backgroundColor: bgEmerald50, // Match Home Background
-      body: FutureBuilder<List<StudentBill>>(
-        future: _billsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
+      backgroundColor: Colors.white, // Changed from bgEmerald50
+      body: Stack(
+        children: [
+          // 1. Fixed Pattern Background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.40, // More visible pattern
+              child: Image.asset(
+                'assets/background.jpeg',
+                fit: BoxFit.cover,
+                // Removed color tint to match Home Page white/silhouette style
+              ),
+            ),
+          ),
 
-          final allBills = snapshot.data ?? [];
+          // 2. Main Content
+          FutureBuilder<List<StudentBill>>(
+            future: _billsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}"));
+              }
 
-          // 1. Filter: Unpaid Only
-          // 2. Split: General vs Event
-          final generalBills = allBills
-              .where((b) => b.status == BillStatus.UNPAID && !b.isEventBill)
-              .toList();
-          final eventBills = allBills
-              .where((b) => b.status == BillStatus.UNPAID && b.isEventBill)
-              .toList();
+              final allBills = snapshot.data ?? [];
 
-          final totalUnpaid = (generalBills + eventBills).fold<double>(
-            0,
-            (sum, bill) => sum + bill.amount,
-          );
+              final generalBills = allBills
+                  .where((b) => b.status == BillStatus.UNPAID && !b.isEventBill)
+                  .toList();
+              final eventBills = allBills
+                  .where((b) => b.status == BillStatus.UNPAID && b.isEventBill)
+                  .toList();
 
-          final currencyFormatter = NumberFormat.currency(
-            locale: 'id_ID',
-            symbol: 'Rp ',
-            decimalDigits: 0,
-          );
+              final totalUnpaid = (generalBills + eventBills).fold<double>(
+                0,
+                (sum, bill) => sum + bill.amount,
+              );
 
-          return NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                SliverAppBar(
-                  expandedHeight: 300, // Increased to fix overflow
-                  pinned: true,
-                  backgroundColor: AppColors.primary,
-                  elevation: 0,
-                  scrolledUnderElevation:
-                      0, // Prevent elevation change on scroll
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(32),
-                    ),
-                  ),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+              final currencyFormatter = NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp ',
+                decimalDigits: 0,
+              );
+
+              return NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverAppBar(
+                      expandedHeight:
+                          280, // Reduced from 300 to tighten spacing
+                      pinned: true,
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      scrolledUnderElevation: 0,
+                      shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(
                           bottom: Radius.circular(32),
                         ),
                       ),
-                      child: SafeArea(
-                        child: Padding(
-                          // Fixed overlap by increasing bottom padding (clears TabBar)
-                          padding: const EdgeInsets.only(
-                            top: 60,
-                            left: 24,
-                            right: 24,
-                            bottom:
-                                70, // Increased to 70 to clear TabBar and push text up
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Container(
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.vertical(
+                              bottom: Radius.circular(32),
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              // Santri Context
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                          child: SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 20, // Reduced from 60
+                                left: 24,
+                                right: 24,
+                                bottom: 70,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        "Tagihan Aktif",
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 14,
-                                        ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Tagihan Aktif",
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.7,
+                                              ),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            widget.activeSantri.nama,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.activeSantri.nama,
-                                        style: const TextStyle(
+                                      CircleAvatar(
+                                        backgroundColor: Colors.white
+                                            .withOpacity(0.2),
+                                        radius: 24,
+                                        child: const Icon(
+                                          Icons.person,
                                           color: Colors.white,
-                                          fontSize: 22, // Slightly larger
-                                          fontWeight: FontWeight.bold,
+                                          size: 28,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  CircleAvatar(
-                                    backgroundColor: Colors.white.withOpacity(
-                                      0.2,
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    "Total Kewajiban",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 13,
                                     ),
-                                    radius: 24,
-                                    child: const Icon(
-                                      Icons.person,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Typography Update: Matched BalanceSection
+                                  Text(
+                                    currencyFormatter
+                                        .format(totalUnpaid)
+                                        .replaceAll(
+                                          'Rp ',
+                                          'Rp ',
+                                        ), // Formatting tweak if needed
+                                    style: const TextStyle(
+                                      fontSize: 30, // Reduced from 36
+                                      fontWeight: FontWeight.w800, // Extra bold
                                       color: Colors.white,
-                                      size: 28,
+                                      letterSpacing: -1.0, // Tighter spacing
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black26,
+                                          offset: Offset(0, 4),
+                                          blurRadius: 10,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-
-                              const SizedBox(height: 12), // Reduced spacing
-                              // Total Summary
-                              Text(
-                                "Total Kewajiban",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                currencyFormatter.format(totalUnpaid),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28, // Reduced from 36
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Courier',
-                                ),
-                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          if (widget.onBack != null) {
+                            widget.onBack!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                      title: const Text(
+                        "Rincian Keuangan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      centerTitle: true,
+                      bottom: PreferredSize(
+                        preferredSize: const Size.fromHeight(60),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.accent,
+                            unselectedLabelColor: Colors.white.withOpacity(0.7),
+                            indicatorColor: AppColors.accent,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            indicatorWeight: 4,
+                            dividerColor: Colors.transparent,
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            tabs: const [
+                              Tab(text: "TAGIHAN UMUM"),
+                              Tab(text: "TAGIHAN EVENT"),
                             ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  title: const Text(
-                    "Rincian Keuangan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  centerTitle: true,
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(
-                      60,
-                    ), // Increased to fit tabs comfortably
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: TabBar(
-                        controller: _tabController,
-                        labelColor: AppColors.accent,
-                        unselectedLabelColor: Colors.white.withOpacity(0.7),
-                        indicatorColor: AppColors.accent,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        indicatorWeight: 4,
-                        dividerColor:
-                            Colors.transparent, // Remove the unwanted line
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        tabs: const [
-                          Tab(text: "TAGIHAN UMUM"),
-                          Tab(text: "TAGIHAN EVENT"),
-                        ],
-                      ),
-                    ),
-                  ),
+                  ];
+                },
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildList(generalBills, "Belum ada tagihan umum."),
+                    _buildList(eventBills, "Belum ada tagihan event."),
+                  ],
                 ),
-              ];
+              );
             },
-            body: Container(
-              color: bgEmerald50,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: General Bills
-                  _buildList(generalBills, "Belum ada tagihan umum."),
-
-                  // Tab 2: Event Bills
-                  _buildList(eventBills, "Belum ada tagihan event."),
-                ],
-              ),
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -295,19 +320,53 @@ class _BillsListPageState extends State<BillsListPage>
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: bills.length,
-      itemBuilder: (context, index) {
-        return BillCard(
-          bill: bills[index],
-          onPay: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Bayar tagihan: ${bills[index].title}")),
-            );
-          },
-        );
-      },
+      children: [
+        ...bills.map(
+          (bill) => BillCard(
+            bill: bill,
+            onPay: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Bayar tagihan: ${bill.title}")),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: () {
+              if (widget.onViewHistory != null) {
+                widget.onViewHistory!();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PaymentHistoryPage(activeSantri: widget.activeSantri),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24), // Pill shape
+              ),
+            ),
+            child: const Text(
+              "Riwayat Tagihan",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
 }

@@ -61,173 +61,222 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage>
   @override
   Widget build(BuildContext context) {
     // Theme Constants matching Home
-    const bgEmerald50 = Color(0xFFECFDF5);
-
     return Scaffold(
-      backgroundColor: bgEmerald50, // Match Home Background
-      body: FutureBuilder<List<StudentBill>>(
-        future: _billsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // 1. Fixed Pattern Background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.40,
+              child: Image.asset(
+                'assets/background.jpeg',
+                fit: BoxFit.cover,
+                // No color tint
+              ),
+            ),
+          ),
 
-          final allBills = snapshot.data ?? [];
+          // 2. Main Content
+          FutureBuilder<List<StudentBill>>(
+            future: _billsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}"));
+              }
 
-          // 1. Filter: PAID Only
-          // 2. Split: General vs Event
-          final generalBills = allBills
-              .where((b) => b.status == BillStatus.PAID && !b.isEventBill)
-              .toList();
-          final eventBills = allBills
-              .where((b) => b.status == BillStatus.PAID && b.isEventBill)
-              .toList();
+              final allBills = snapshot.data ?? [];
 
-          // Optional: Sort by date descending (Newest first)
-          generalBills.sort((a, b) => b.dueDate.compareTo(a.dueDate));
-          eventBills.sort((a, b) => b.displayDate.compareTo(a.displayDate));
+              final generalBills = allBills
+                  .where((b) => b.status == BillStatus.PAID && !b.isEventBill)
+                  .toList();
+              final eventBills = allBills
+                  .where((b) => b.status == BillStatus.PAID && b.isEventBill)
+                  .toList();
 
-          return NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                SliverAppBar(
-                  expandedHeight:
-                      220, // Shorter than Bills Page (No Total Amount)
-                  pinned: true,
-                  backgroundColor: AppColors.primary,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(32),
-                    ),
-                  ),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+              generalBills.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+              eventBills.sort((a, b) => b.displayDate.compareTo(a.displayDate));
+
+              return NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverAppBar(
+                      expandedHeight: 250, // Matched Bills Page
+                      pinned: true,
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      scrolledUnderElevation: 0,
+                      shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(
                           bottom: Radius.circular(32),
                         ),
                       ),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            top: 60,
-                            left: 24,
-                            right: 24,
-                            bottom: 60,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Container(
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.vertical(
+                              bottom: Radius.circular(32),
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              // Header Title & Context
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                          child: SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 20, // Reduced padding
+                                left: 24,
+                                right: 24,
+                                bottom: 60,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        "Riwayat Pembayaran",
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 14,
-                                        ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Riwayat Pembayaran",
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.7,
+                                              ),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            widget.activeSantri.nama,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.activeSantri.nama,
-                                        style: const TextStyle(
+                                      CircleAvatar(
+                                        backgroundColor: Colors.white
+                                            .withOpacity(0.2),
+                                        radius: 24,
+                                        child: const Icon(
+                                          Icons.history,
                                           color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
+                                          size: 28,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  CircleAvatar(
-                                    backgroundColor: Colors.white.withOpacity(
-                                      0.2,
+                                  const SizedBox(height: 24),
+                                  // Placeholder for Balance or just spacing since no Total here
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.1),
+                                      ),
                                     ),
-                                    radius: 24,
-                                    child: const Icon(
-                                      Icons.history,
-                                      color: Colors.white,
-                                      size: 28,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_outline,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Semua tagihan lunas",
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.9,
+                                            ),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                              // No Total Amount Section
+                            ),
+                          ),
+                        ),
+                      ),
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          if (widget.onBack != null) {
+                            widget.onBack!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                      title: const Text(
+                        "Arsip Keuangan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      centerTitle: true,
+                      bottom: PreferredSize(
+                        preferredSize: const Size.fromHeight(60),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.accent,
+                            unselectedLabelColor: Colors.white.withOpacity(0.7),
+                            indicatorColor: AppColors.accent,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            indicatorWeight: 4,
+                            dividerColor: Colors.transparent,
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            tabs: const [
+                              Tab(text: "RIWAYAT UMUM"),
+                              Tab(text: "RIWAYAT EVENT"),
                             ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  title: const Text(
-                    "Arsip Keuangan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  centerTitle: true,
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(60),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: TabBar(
-                        controller: _tabController,
-                        labelColor: AppColors.accent,
-                        unselectedLabelColor: Colors.white.withOpacity(0.7),
-                        indicatorColor: AppColors.accent,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        indicatorWeight: 4,
-                        dividerColor: Colors.transparent,
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        tabs: const [
-                          Tab(text: "RIWAYAT UMUM"),
-                          Tab(text: "RIWAYAT EVENT"),
-                        ],
+                  ];
+                },
+                body: Container(
+                  // Transparent to show background
+                  color: Colors.transparent,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildList(
+                        generalBills,
+                        "Belum ada riwayat pembayaran umum.",
                       ),
-                    ),
+                      _buildList(
+                        eventBills,
+                        "Belum ada riwayat pembayaran event.",
+                      ),
+                    ],
                   ),
                 ),
-              ];
+              );
             },
-            body: Container(
-              color: bgEmerald50,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: General History
-                  _buildList(
-                    generalBills,
-                    "Belum ada riwayat pembayaran umum.",
-                  ),
-
-                  // Tab 2: Event History
-                  _buildList(eventBills, "Belum ada riwayat pembayaran event."),
-                ],
-              ),
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
