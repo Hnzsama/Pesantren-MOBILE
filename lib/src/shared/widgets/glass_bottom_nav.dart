@@ -35,8 +35,8 @@ class GlassBottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildNavItem(Icons.home_filled, "Home", 0),
-            _buildNavItem(Icons.assignment, "Akademik", 1),
-            _buildNavItem(Icons.chat_bubble, "Pesan", 2),
+            _buildNavItem(Icons.calendar_today, "Aktivitas", 1),
+            _buildNavItem(Icons.receipt_long, "Tagihan", 2),
             _buildNavItem(Icons.person, "Profil", 3),
           ],
         ),
