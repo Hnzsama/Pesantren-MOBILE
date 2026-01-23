@@ -130,7 +130,7 @@ class _PermissionsPageState extends State<PermissionsPage>
                         const SizedBox.shrink(), // Custom title in FlexibleSpace
                   ),
                   bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(60),
+                    preferredSize: const Size.fromHeight(80),
                     child: Container(
                       height: 60,
                       decoration: const BoxDecoration(
@@ -143,15 +143,24 @@ class _PermissionsPageState extends State<PermissionsPage>
                         ),
                       ),
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: const EdgeInsets.all(
+                        4,
+                      ), // Add padding for inner tab
                       child: TabBar(
                         controller: _tabController,
-                        isScrollable: true,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        indicatorColor: AppColors.primary,
+                        isScrollable:
+                            false, // Make it fixed to fit width better if needed, or true
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        indicatorColor: Colors.transparent, // Hide default line
                         labelColor: AppColors.primary,
                         unselectedLabelColor: Colors.grey,
                         labelStyle: const TextStyle(
                           fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
                         tabs: const [
                           Tab(text: "Semua"),
