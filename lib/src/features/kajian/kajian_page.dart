@@ -6,7 +6,8 @@ import 'package:pesantren_mobile/src/features/kajian/widgets/kajian_card.dart';
 import 'package:pesantren_mobile/src/features/kajian/kajian_detail_page.dart';
 
 class KajianPage extends StatefulWidget {
-  const KajianPage({super.key});
+  final VoidCallback? onBack;
+  const KajianPage({super.key, this.onBack});
 
   @override
   State<KajianPage> createState() => _KajianPageState();
@@ -132,7 +133,13 @@ class _KajianPageState extends State<KajianPage> {
                       ),
                       leading: IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          if (widget.onBack != null) {
+                            widget.onBack!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
                       ),
                       title: const Text(
                         "Video Kajian",
