@@ -64,7 +64,7 @@ class ProfilePage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 24),
                             // Profile Avatar
                             Container(
                               padding: const EdgeInsets.all(4),
