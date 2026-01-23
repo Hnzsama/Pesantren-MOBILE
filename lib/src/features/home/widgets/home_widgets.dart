@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
+import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
 
 class SantriHeader extends StatefulWidget {
   final List<SantriModel> santriList;
@@ -72,12 +73,26 @@ class _SantriHeaderState extends State<SantriHeader> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 50, bottom: 20),
+      padding: const EdgeInsets.only(
+        top: 40,
+        bottom: 16,
+      ), // Reduced padding (was 50, 20)
       // Extend background to cover the stacked cards if needed,
       // but simpler to just let them overflow if clipped correctly.
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.primary, AppColors.primaryDark],
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +132,7 @@ class _SantriHeaderState extends State<SantriHeader> {
 
           // Stacked Card Carousel
           SizedBox(
-            height: 220,
+            height: 190, // Reduced height (was 220)
             child: PageView.builder(
               controller: _pageController,
               itemCount: widget.santriList.length,
@@ -238,6 +253,24 @@ class StudentIdCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: bgEmerald100.withOpacity(0.5),
                   shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            // Shine Effect (Subtle Overlay)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.0),
+                    ],
+                    stops: const [0.0, 0.4, 1.0],
+                  ),
                 ),
               ),
             ),
@@ -418,20 +451,25 @@ class DashboardCard extends StatelessWidget {
       onTap: () {
         // Placeholder for future navigation
       },
-      child: Container(
-        width: 150,
+      child: GlassContainer(
+        width: double.infinity, // Fill available width (Expanded)
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(20),
+        blur: 10,
+        opacity: 0.95, // Almost opaque for "card" feel
+        shadows: [
+          // Glow effect matching the icon color
+          BoxShadow(
+            color: (iconColor ?? AppColors.primary).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -482,12 +520,16 @@ class MenuIcon extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final Color? backgroundColor;
+  final Color? iconColor;
 
   const MenuIcon({
     super.key,
     required this.label,
     required this.icon,
     required this.onTap,
+    this.backgroundColor,
+    this.iconColor,
   });
 
   @override
@@ -497,22 +539,193 @@ class MenuIcon extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(16),
+          GlassContainer(
+            width: 56, // Fixed width for square
+            height: 56, // Fixed height for square
+            padding: EdgeInsets.zero,
+            borderRadius: BorderRadius.circular(18),
+            color: backgroundColor ?? AppColors.background,
+            blur: 10,
+            opacity: 0.9,
+            child: Center(
+              child: Icon(
+                icon,
+                color: iconColor ?? AppColors.primary,
+                size: 24,
+              ),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 28),
           ),
           const SizedBox(height: 8),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class InfoSlider extends StatefulWidget {
+  const InfoSlider({super.key});
+
+  @override
+  State<InfoSlider> createState() => _InfoSliderState();
+}
+
+class _InfoSliderState extends State<InfoSlider> {
+  final PageController _controller = PageController();
+  int _currentIndex = 0;
+
+  // Mock Data
+  final List<Map<String, dynamic>> _infoList = [
+    {
+      "title": "Penerimaan Santri Baru",
+      "desc": "Gelombang 1 Tahun Ajaran 2026/2027 telah dibuka.",
+      "color": Colors.blue,
+      "icon": Icons.school,
+    },
+    {
+      "title": "Kajian Bulanan",
+      "desc": "Bersama KH. Ahmad Dahlan, Sabtu ini di Masjid Utama.",
+      "color": Colors.green,
+      "icon": Icons.mosque,
+    },
+    {
+      "title": "Jaga Kesehatan",
+      "desc": "Cuaca sedang tidak menentu, jangan lupa minum vitamin.",
+      "color": Colors.orange,
+      "icon": Icons.health_and_safety,
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-slide every 5 seconds
+    Future.delayed(const Duration(seconds: 5), _autoSlide);
+  }
+
+  void _autoSlide() {
+    if (!mounted) return;
+    if (_controller.hasClients) {
+      final nextPage = (_currentIndex + 1) % _infoList.length;
+      _controller.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+    Future.delayed(const Duration(seconds: 5), _autoSlide);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 120, // Increased height to prevent clipping
+          child: PageView.builder(
+            controller: _controller,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+            },
+            itemCount: _infoList.length,
+            itemBuilder: (context, index) {
+              final info = _infoList[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: (info['color'] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: (info['color'] as Color).withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (info['color'] as Color).withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(info['icon'], color: info['color']),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            info['title'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            info['desc'],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Indicators
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_infoList.length, (index) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: _currentIndex == index ? 20 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: _currentIndex == index
+                    ? AppColors.primary
+                    : Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
