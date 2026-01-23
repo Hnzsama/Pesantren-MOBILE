@@ -53,16 +53,6 @@ class _PermissionsPageState extends State<PermissionsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Fitur Form Izin akan segera hadir")),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text("Buat Izin"),
-      ),
       body: Stack(
         children: [
           // Background
@@ -87,7 +77,7 @@ class _PermissionsPageState extends State<PermissionsPage>
                       bottom: Radius.circular(32),
                     ),
                   ),
-                  expandedHeight: 160,
+                  expandedHeight: 200,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: widget.onBack ?? () => Navigator.pop(context),
@@ -104,12 +94,11 @@ class _PermissionsPageState extends State<PermissionsPage>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 20),
                             const Text(
                               "Riwayat Perizinan",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -119,6 +108,49 @@ class _PermissionsPageState extends State<PermissionsPage>
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Create Permission Button
+                            Material(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              child: InkWell(
+                                onTap: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Fitur Form Izin akan segera hadir",
+                                      ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.add_circle_outline,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Buat Izin Baru",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ],
