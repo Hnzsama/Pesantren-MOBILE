@@ -9,6 +9,7 @@ import 'package:pesantren_mobile/src/features/reports/student_report_page.dart';
 import 'package:pesantren_mobile/src/features/activities/activities_page.dart';
 import 'package:pesantren_mobile/src/features/kajian/kajian_page.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
+import 'package:pesantren_mobile/src/features/transactions/shopping_history_page.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
