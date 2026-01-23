@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/home_widgets.dart';
@@ -34,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   // Navigation State
   bool _showPaymentHistory = false;
   Widget? _currentHomeSubPage;
+  bool _isBottomNavVisible = true;
 
   @override
   void initState() {
@@ -330,13 +332,33 @@ class _HomePageState extends State<HomePage> {
       },
       child: Scaffold(
         extendBody: true,
-        bottomNavigationBar: GlassBottomNav(
-          selectedIndex: _navIndex,
-          onItemTapped: (index) {
-            setState(() => _navIndex = index);
-          },
+        bottomNavigationBar: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _isBottomNavVisible ? 100 : 0,
+          child: Wrap(
+            children: [
+              GlassBottomNav(
+                selectedIndex: _navIndex,
+                onItemTapped: (index) {
+                  setState(() => _navIndex = index);
+                },
+              ),
+            ],
+          ),
         ),
-        body: _buildBody(),
+        body: NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction == ScrollDirection.reverse &&
+                _isBottomNavVisible) {
+              setState(() => _isBottomNavVisible = false);
+            } else if (notification.direction == ScrollDirection.forward &&
+                !_isBottomNavVisible) {
+              setState(() => _isBottomNavVisible = true);
+            }
+            return true;
+          },
+          child: _buildBody(),
+        ),
       ),
     );
   }
