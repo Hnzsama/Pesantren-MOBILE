@@ -26,6 +26,33 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
     1000000,
   ];
 
+  int _selectedPaymentMethod = 0; // 0: QRIS, 1: VA BSI, 2: VA Mandiri
+
+  // Mock Payment Methods
+  final List<Map<String, dynamic>> _paymentMethods = [
+    {
+      'id': 0,
+      'name': 'QRIS',
+      'desc': 'GoPay, OVO, Dana, ShopeePay',
+      'icon': Icons.qr_code_scanner,
+      'color': Colors.blue,
+    },
+    {
+      'id': 1,
+      'name': 'Bank Syariah Indonesia (BSI)',
+      'desc': 'Virtual Account',
+      'icon': Icons.account_balance,
+      'color': Colors.teal,
+    },
+    {
+      'id': 2,
+      'name': 'Mandiri',
+      'desc': 'Virtual Account',
+      'icon': Icons.account_balance,
+      'color': Colors.indigo,
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +77,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: _buildStickyBottomButton(),
       body: Stack(
         children: [
           // 1. Fixed Pattern Background
@@ -65,7 +93,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  expandedHeight: 230,
+                  expandedHeight: 250, // Increased height for better spacing
                   pinned: true,
                   backgroundColor: AppColors.primary,
                   elevation: 0,
@@ -96,34 +124,61 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Rp ${widget.activeSantri.uangSaku.toInt()}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
+                            const SizedBox(height: 12),
+                            // Balance Card
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Text(
+                                "Rp ${widget.activeSantri.uangSaku.toInt()}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(
-                                widget.activeSantri.nama,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.person,
+                                    color: Colors.white70,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "${widget.activeSantri.nama} • ${widget.activeSantri.kelas}",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -156,10 +211,10 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                          crossAxisCount: 3, // Changed to 3 columns
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          childAspectRatio: 2.5,
+                          childAspectRatio: 1.8,
                         ),
                     itemCount: _presetAmounts.length,
                     itemBuilder: (context, index) {
@@ -170,44 +225,42 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  _buildSectionTitle("Nominal Lainnya"),
+                  _buildSectionTitle("Atau Masukkan Manual"),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _customAmountController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                    decoration: InputDecoration(
-                      prefixText: "Rp ",
-                      prefixStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                      hintText: "Masukkan nominal manual",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _customAmountController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                      decoration: InputDecoration(
+                        prefixText: "Rp ",
+                        prefixStyle: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        hintText: "0",
+                        hintStyle: TextStyle(color: Colors.grey.shade300),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -215,98 +268,81 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
 
                   _buildSectionTitle("Metode Pembayaran"),
                   const SizedBox(height: 12),
-                  GlassContainer(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.qr_code_scanner,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "QRIS (Semua Pembayaran)",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "OVO, GoPay, Dana, ShopeePay, Mobile Banking",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.check_circle,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
+                  // Render Payment Methods
+                  ..._paymentMethods.map(
+                    (method) => _buildPaymentMethodCard(method),
                   ),
 
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Top Up Rp $_selectedAmount Berhasil (Simulasi)",
-                            ),
-                            backgroundColor: AppColors.primary,
-                          ),
-                        );
-                        if (widget.onBack != null) {
-                          widget.onBack!();
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text(
-                        "Lanjut Pembayaran",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStickyBottomButton() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Top Up Rp $_selectedAmount Berhasil (Simulasi)",
+                  ),
+                  backgroundColor: AppColors.primary,
+                ),
+              );
+              if (widget.onBack != null) {
+                widget.onBack!();
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shadowColor: AppColors.primary.withOpacity(0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Lanjut Pembayaran",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  "Rp ${(_selectedAmount / 1000).toInt()}k",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -344,32 +380,112 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
         });
       },
       borderRadius: BorderRadius.circular(16),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            color: isSelected ? AppColors.primary : Colors.grey.shade200,
             width: isSelected ? 0 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
                     color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 10,
+                    blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Center(
           child: Text(
             "${(amount / 1000).toInt()}k",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: isSelected ? Colors.white : AppColors.textPrimary,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodCard(Map<String, dynamic> method) {
+    final bool isSelected = _selectedPaymentMethod == method['id'];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () => setState(() => _selectedPaymentMethod = method['id']),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.transparent,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (method['color'] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  method['icon'] as IconData,
+                  color: method['color'] as Color,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      method['name'] as String,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      method['desc'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                const Icon(Icons.check_circle, color: AppColors.primary)
+              else
+                Icon(Icons.circle_outlined, color: Colors.grey.shade300),
+            ],
           ),
         ),
       ),
