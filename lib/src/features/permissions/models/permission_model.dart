@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 enum PermissionStatus { pending, approved, rejected }
 
 class PermissionModel {
-  final String id;
-  final String studentName; // Based on schema
+  final int id;
+  final String studentName;
   final String reason;
   final DateTime startDate;
   final DateTime endDate;
   final PermissionStatus status;
   final String? adminNote;
   final DateTime createdAt;
+  final DateTime updatedAt;
 
   const PermissionModel({
     required this.id,
@@ -21,7 +22,61 @@ class PermissionModel {
     required this.status,
     this.adminNote,
     required this.createdAt,
+    required this.updatedAt,
   });
+
+  factory PermissionModel.fromJson(Map<String, dynamic> json) {
+    PermissionStatus parseStatus(String? statusStr) {
+      switch (statusStr?.toLowerCase()) {
+        case 'approved':
+          return PermissionStatus.approved;
+        case 'rejected':
+          return PermissionStatus.rejected;
+        case 'pending':
+        default:
+          return PermissionStatus.pending;
+      }
+    }
+
+    return PermissionModel(
+      id: json['id'] ?? 0,
+      studentName: json['student_name'] ?? 'Unknown',
+      reason: json['reason'] ?? '',
+      startDate: DateTime.tryParse(json['start_date'] ?? '') ?? DateTime.now(),
+      endDate: DateTime.tryParse(json['end_date'] ?? '') ?? DateTime.now(),
+      status: parseStatus(json['status']),
+      adminNote: json['admin_note'],
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    String statusToString() {
+      switch (status) {
+        case PermissionStatus.approved:
+          return 'approved';
+        case PermissionStatus.rejected:
+          return 'rejected';
+        case PermissionStatus.pending:
+          return 'pending';
+      }
+    }
+
+    return {
+      'id': id,
+      'student_name': studentName,
+      'reason': reason,
+      'start_date':
+          '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
+      'end_date':
+          '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}',
+      'status': statusToString(),
+      'admin_note': adminNote,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
 
   // Helper to get Color based on status
   Color get statusColor {
@@ -45,38 +100,4 @@ class PermissionModel {
         return "Ditolak";
     }
   }
-}
-
-class MockPermissions {
-  static final List<PermissionModel> data = [
-    PermissionModel(
-      id: '1',
-      studentName: 'Ahmad Fulan',
-      reason: 'Sakit Demam',
-      startDate: DateTime.now().subtract(const Duration(days: 2)),
-      endDate: DateTime.now().subtract(const Duration(days: 0)),
-      status: PermissionStatus.approved,
-      adminNote: 'Semoga lekas sembuh',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    PermissionModel(
-      id: '2',
-      studentName: 'Ahmad Fulan',
-      reason: 'Acara Keluarga (Nikahan Kakak)',
-      startDate: DateTime.now().add(const Duration(days: 5)),
-      endDate: DateTime.now().add(const Duration(days: 7)),
-      status: PermissionStatus.pending,
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    PermissionModel(
-      id: '3',
-      studentName: 'Ahmad Fulan',
-      reason: 'Pulang Kampung',
-      startDate: DateTime.now().subtract(const Duration(days: 20)),
-      endDate: DateTime.now().subtract(const Duration(days: 18)),
-      status: PermissionStatus.rejected,
-      adminNote: 'Belum waktunya liburan',
-      createdAt: DateTime.now().subtract(const Duration(days: 22)),
-    ),
-  ];
 }

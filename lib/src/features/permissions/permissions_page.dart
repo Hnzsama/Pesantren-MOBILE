@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/features/permissions/models/permission_model.dart';
+import 'package:pesantren_mobile/src/features/permissions/services/permission_service.dart';
+import 'package:pesantren_mobile/src/features/permissions/permission_form_page.dart';
 import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
 
 class PermissionsPage extends StatefulWidget {
@@ -18,12 +20,20 @@ class PermissionsPage extends StatefulWidget {
 class _PermissionsPageState extends State<PermissionsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<PermissionModel> _allPermissions = MockPermissions.data;
+  final PermissionService _permissionService = PermissionService();
+  late Future<List<PermissionModel>> _permissionsFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadPermissions();
+  }
+
+  void _loadPermissions() {
+    setState(() {
+      _permissionsFuture = _permissionService.getPermissions();
+    });
   }
 
   @override
@@ -32,19 +42,22 @@ class _PermissionsPageState extends State<PermissionsPage>
     super.dispose();
   }
 
-  List<PermissionModel> _getFilteredPermissions(int tabIndex) {
-    if (tabIndex == 0) return _allPermissions;
+  List<PermissionModel> _getFilteredPermissions(
+    List<PermissionModel> allPermissions,
+    int tabIndex,
+  ) {
+    if (tabIndex == 0) return allPermissions;
     if (tabIndex == 1) {
-      return _allPermissions
+      return allPermissions
           .where((p) => p.status == PermissionStatus.pending)
           .toList();
     }
     if (tabIndex == 2) {
-      return _allPermissions
+      return allPermissions
           .where((p) => p.status == PermissionStatus.approved)
           .toList();
     }
-    return _allPermissions
+    return allPermissions
         .where((p) => p.status == PermissionStatus.rejected)
         .toList();
   }
@@ -122,16 +135,20 @@ class _PermissionsPageState extends State<PermissionsPage>
                                     color: Colors.white.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(20),
                                     child: InkWell(
-                                      onTap: () {
-                                        ScaffoldMessenger.of(
+                                      onTap: () async {
+                                        final result = await Navigator.push(
                                           context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Fitur Form Izin akan segera hadir",
+                                          MaterialPageRoute(
+                                            builder: (_) => PermissionFormPage(
+                                              activeSantri: widget.activeSantri,
                                             ),
                                           ),
                                         );
+
+                                        // Refresh data if permission was submitted successfully
+                                        if (result == true) {
+                                          _loadPermissions();
+                                        }
                                       },
                                       borderRadius: BorderRadius.circular(20),
                                       child: Container(
@@ -219,24 +236,66 @@ class _PermissionsPageState extends State<PermissionsPage>
                 ),
               ];
             },
-            body: TabBarView(
-              controller: _tabController,
-              physics:
-                  const NeverScrollableScrollPhysics(), // Handle scroll in list
-              children: List.generate(4, (index) {
-                final permissions = _getFilteredPermissions(index);
-                if (permissions.isEmpty) {
-                  return _buildEmptyState();
+            body: FutureBuilder<List<PermissionModel>>(
+              future: _permissionsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                  itemCount: permissions.length,
-                  separatorBuilder: (c, i) => const SizedBox(height: 16),
-                  itemBuilder: (context, i) {
-                    return _buildPermissionCard(permissions[i]);
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Error: ${snapshot.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadPermissions,
+                          child: const Text('Coba Lagi'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final allPermissions = snapshot.data ?? [];
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    _loadPermissions();
+                    await _permissionsFuture;
                   },
+                  child: TabBarView(
+                    controller: _tabController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: List.generate(4, (index) {
+                      final permissions = _getFilteredPermissions(
+                        allPermissions,
+                        index,
+                      );
+                      if (permissions.isEmpty) {
+                        return _buildEmptyState();
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        primary: true,
+                        itemCount: permissions.length,
+                        separatorBuilder: (c, i) => const SizedBox(height: 16),
+                        itemBuilder: (context, i) {
+                          return _buildPermissionCard(permissions[i]);
+                        },
+                      );
+                    }),
+                  ),
                 );
-              }),
+              },
             ),
           ),
         ],
@@ -245,25 +304,31 @@ class _PermissionsPageState extends State<PermissionsPage>
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.assignment_turned_in_outlined,
-            size: 80,
-            color: Colors.grey.withOpacity(0.5),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: 400,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.assignment_turned_in_outlined,
+                size: 80,
+                color: Colors.grey.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Belum ada data perizinan",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            "Belum ada data perizinan",
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
