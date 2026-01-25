@@ -4,7 +4,9 @@ import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/home_widgets.dart';
 
 class HomeGreeting extends StatelessWidget {
-  const HomeGreeting({super.key});
+  final String parentName;
+
+  const HomeGreeting({super.key, this.parentName = "Wali Santri"});
 
   @override
   Widget build(BuildContext context) {
@@ -13,16 +15,16 @@ class HomeGreeting extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "Assalamualaikum,",
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                "Wali Santri",
+                parentName,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -234,22 +236,25 @@ class _SantriCardCarouselState extends State<SantriCardCarousel> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.santriList.length, (index) {
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: _currentPage.round() == index ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _currentPage.round() == index
-                    ? AppColors.primary
-                    : AppColors.primary.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            );
-          }),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.santriList.length, (index) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentPage.round() == index ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _currentPage.round() == index
+                      ? AppColors.primary
+                      : AppColors.primary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
         ),
       ],
     );

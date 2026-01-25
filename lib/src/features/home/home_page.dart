@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/features/auth/models/user_model.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/home_widgets.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/new_home_widgets.dart';
 import 'package:pesantren_mobile/src/features/achievements/achievements_page.dart';
@@ -14,6 +16,8 @@ import 'package:pesantren_mobile/src/features/transactions/shopping_history_page
 import 'package:pesantren_mobile/src/features/profile/profile_page.dart';
 import 'package:pesantren_mobile/src/features/permissions/permissions_page.dart';
 import 'package:pesantren_mobile/src/features/wallet/wallet_topup_page.dart';
+import 'package:pesantren_mobile/src/features/transactions/models/transaction_model.dart';
+import 'package:pesantren_mobile/src/features/transactions/services/transaction_service.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -28,7 +32,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // State Management
-  late SantriModel _activeSantri;
+  // late SantriModel _activeSantri;
+  SantriModel? _activeSantri;
+  List<SantriModel> _santriList = [];
+  UserModel? _user;
+  List<TransactionModel> _recentTransactions = [];
   bool _isLoadingContent = false;
   int _navIndex = 0;
 
@@ -41,14 +49,43 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     // Initialize with first mock data
-    _activeSantri = MockData.santriList.first;
+    // _activeSantri = MockData.santriList.first;
     _loadContent(); // Simulate fetching content
   }
 
   Future<void> _loadContent() async {
     setState(() => _isLoadingContent = true);
-    await Future.delayed(const Duration(seconds: 1)); // Mock API delay
-    if (mounted) setState(() => _isLoadingContent = false);
+
+    // Fetch User Data
+    final authService = AuthService();
+    final user = await authService.getUser();
+
+    // Fetch Transactions if active santri exists
+    List<TransactionModel> transactions = [];
+    if (user != null && user.students.isNotEmpty) {
+      final activeId = _activeSantri?.id ?? user.students.first.id;
+      final txService = TransactionService();
+      // Fetch latest 5 only (page 1)
+      transactions = await txService.getTransactions(studentId: activeId);
+    }
+
+    if (mounted) {
+      setState(() {
+        _user = user;
+        if (user != null && user.students.isNotEmpty) {
+          _santriList = user.students;
+          // Only set default active santri if not already set, or if current one is invalid
+          if (_activeSantri == null ||
+              !_santriList.any((s) => s.id == _activeSantri!.id)) {
+            _activeSantri = _santriList.first;
+          }
+        } else {
+          _santriList = [];
+        }
+        _recentTransactions = transactions;
+        _isLoadingContent = false;
+      });
+    }
   }
 
   void _switchSantri(SantriModel santri) {
@@ -81,17 +118,25 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              ...MockData.santriList.map(
-                (santri) => ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.person)),
-                  title: Text(santri.nama),
-                  subtitle: Text(santri.kelas),
-                  trailing: _activeSantri.id == santri.id
-                      ? const Icon(Icons.check_circle, color: AppColors.primary)
-                      : null,
-                  onTap: () => _switchSantri(santri),
-                ),
-              ),
+              const SizedBox(height: 16),
+              if (_santriList.isNotEmpty)
+                ..._santriList.map(
+                  (santri) => ListTile(
+                    leading: const CircleAvatar(child: Icon(Icons.person)),
+                    title: Text(santri.nama),
+                    subtitle: Text(santri.kelas),
+                    trailing: _activeSantri?.id == santri.id
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                          )
+                        : null,
+                    onTap: () => _switchSantri(santri),
+                  ),
+                )
+              else
+                const Text("Tidak ada data santri linked."),
+              const SizedBox(height: 16),
               const SizedBox(height: 16),
             ],
           ),
@@ -162,7 +207,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pop(context);
                             _navigateTo(
                               StudentReportPage(
-                                activeSantri: _activeSantri,
+                                activeSantri: _activeSantri!,
                                 onBack: () =>
                                     setState(() => _currentHomeSubPage = null),
                               ),
@@ -178,7 +223,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pop(context);
                             _navigateTo(
                               AchievementsPage(
-                                activeSantri: _activeSantri,
+                                activeSantri: _activeSantri!,
                                 onBack: () =>
                                     setState(() => _currentHomeSubPage = null),
                               ),
@@ -217,7 +262,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pop(context);
                             _navigateTo(
                               PermissionsPage(
-                                activeSantri: _activeSantri,
+                                activeSantri: _activeSantri!,
                                 onBack: () =>
                                     setState(() => _currentHomeSubPage = null),
                               ),
@@ -233,6 +278,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pop(context);
                             _navigateTo(
                               ActivitiesPage(
+                                studentId: _activeSantri?.id,
                                 onBack: () =>
                                     setState(() => _currentHomeSubPage = null),
                               ),
@@ -263,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pop(context);
                             _navigateTo(
                               WalletTopUpPage(
-                                activeSantri: _activeSantri,
+                                activeSantri: _activeSantri!,
                                 onBack: () =>
                                     setState(() => _currentHomeSubPage = null),
                               ),
@@ -365,25 +411,37 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildBody() {
     if (_navIndex == 1) {
-      return ActivitiesPage(onBack: () => setState(() => _navIndex = 0));
+      if (_isLoadingContent || _activeSantri == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return ActivitiesPage(
+        studentId: _activeSantri?.id,
+        onBack: () => setState(() => _navIndex = 0),
+      );
     }
 
     if (_navIndex == 2) {
+      if (_isLoadingContent || _activeSantri == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return _showPaymentHistory
           ? PaymentHistoryPage(
-              activeSantri: _activeSantri,
+              activeSantri: _activeSantri!,
               onBack: () => setState(() => _showPaymentHistory = false),
             )
           : BillsListPage(
-              activeSantri: _activeSantri,
+              activeSantri: _activeSantri!,
               onViewHistory: () => setState(() => _showPaymentHistory = true),
               onBack: () => setState(() => _navIndex = 0),
             );
     }
 
     if (_navIndex == 3) {
+      if (_isLoadingContent || _activeSantri == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return ProfilePage(
-        activeSantri: _activeSantri,
+        activeSantri: _activeSantri!,
         onBack: () => setState(() => _navIndex = 0),
       );
     }
@@ -430,13 +488,15 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             children: [
               // === TOP SECTION (Fixed Height roughly) ===
-              const HomeGreeting(),
+              HomeGreeting(parentName: _user?.name ?? "Wali Santri"),
               const SizedBox(height: 10),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: BalanceSection(balance: _activeSantri.uangSaku),
+                    child: BalanceSection(
+                      balance: _activeSantri?.uangSaku ?? 0.0,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Container(
@@ -447,7 +507,9 @@ class _HomePageState extends State<HomePage> {
                       child: InkWell(
                         onTap: () => _navigateTo(
                           WalletTopUpPage(
-                            activeSantri: _activeSantri,
+                            activeSantri:
+                                _activeSantri ??
+                                MockData.santriList.first, // Fallback safe
                             onBack: () =>
                                 setState(() => _currentHomeSubPage = null),
                           ),
@@ -507,87 +569,102 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // 1. Menu Grid
-                            GridView.count(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisCount: 4,
-                              mainAxisSpacing: 16, // Reduced spacing
-                              crossAxisSpacing: 12,
-                              padding: EdgeInsets.zero,
-                              children: [
-                                MenuIcon(
-                                  label: "Rapor",
-                                  icon: Icons.school,
-                                  backgroundColor: const Color(
-                                    0xFFF3E5F5,
-                                  ), // Purple 50
-                                  iconColor: const Color(0xFF9C27B0), // Purple
-                                  onTap: () => _navigateTo(
-                                    StudentReportPage(
-                                      activeSantri: _activeSantri,
-                                      onBack: () => setState(
-                                        () => _currentHomeSubPage = null,
+                            if (_activeSantri == null)
+                              const Center(child: Text("Silahkan tunggu...")),
+                            if (_activeSantri != null)
+                              GridView.count(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisCount: 4,
+                                mainAxisSpacing: 16, // Reduced spacing
+                                crossAxisSpacing: 12,
+                                padding: EdgeInsets.zero,
+                                children: [
+                                  MenuIcon(
+                                    label: "Rapor",
+                                    icon: Icons.school,
+                                    backgroundColor: const Color(
+                                      0xFFF3E5F5,
+                                    ), // Purple 50
+                                    iconColor: const Color(
+                                      0xFF9C27B0,
+                                    ), // Purple
+                                    onTap: () => _navigateTo(
+                                      StudentReportPage(
+                                        activeSantri: _activeSantri!,
+                                        onBack: () => setState(
+                                          () => _currentHomeSubPage = null,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                MenuIcon(
-                                  label: "Prestasi",
-                                  icon: Icons.emoji_events,
-                                  backgroundColor: const Color(
-                                    0xFFFFF3E0,
-                                  ), // Orange 50
-                                  iconColor: const Color(0xFFFF9800), // Orange
-                                  onTap: () => _navigateTo(
-                                    AchievementsPage(
-                                      activeSantri: _activeSantri,
-                                      onBack: () => setState(
-                                        () => _currentHomeSubPage = null,
+                                  MenuIcon(
+                                    label: "Prestasi",
+                                    icon: Icons.emoji_events,
+                                    backgroundColor: const Color(
+                                      0xFFFFF3E0,
+                                    ), // Orange 50
+                                    iconColor: const Color(
+                                      0xFFFF9800,
+                                    ), // Orange
+                                    onTap: () => _navigateTo(
+                                      AchievementsPage(
+                                        activeSantri: _activeSantri!,
+                                        onBack: () => setState(
+                                          () => _currentHomeSubPage = null,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                MenuIcon(
-                                  label: "Kajian",
-                                  icon: Icons.menu_book,
-                                  backgroundColor: const Color(
-                                    0xFFFFEBEE,
-                                  ), // Red 50
-                                  iconColor: const Color(0xFFF44336), // Red
-                                  onTap: () => _navigateTo(
-                                    KajianPage(
-                                      onBack: () => setState(
-                                        () => _currentHomeSubPage = null,
+                                  MenuIcon(
+                                    label: "Kajian",
+                                    icon: Icons.menu_book,
+                                    backgroundColor: const Color(
+                                      0xFFFFEBEE,
+                                    ), // Red 50
+                                    iconColor: const Color(0xFFF44336), // Red
+                                    onTap: () => _navigateTo(
+                                      KajianPage(
+                                        onBack: () => setState(
+                                          () => _currentHomeSubPage = null,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                MenuIcon(
-                                  label: "Lainnya",
-                                  icon: Icons.grid_view,
-                                  backgroundColor: const Color(
-                                    0xFFE3F2FD,
-                                  ), // Blue 50
-                                  iconColor: const Color(0xFF2196F3), // Blue
-                                  onTap: _showAllMenu,
-                                ),
-                              ],
-                            ),
+                                  MenuIcon(
+                                    label: "Lainnya",
+                                    icon: Icons.grid_view,
+                                    backgroundColor: const Color(
+                                      0xFFE3F2FD,
+                                    ), // Blue 50
+                                    iconColor: const Color(0xFF2196F3), // Blue
+                                    onTap: _showAllMenu,
+                                  ),
+                                ],
+                              ),
 
                             const SizedBox(height: 20), // Tighter
                             // 2. Student Card (Floating)
                             // Wrapped in Container to control height if needed
-                            SantriCardCarousel(
-                              santriList: MockData.santriList,
-                              activeSantri: _activeSantri,
-                              onSantriChanged: (santri) {
-                                if (_activeSantri.id != santri.id) {
-                                  setState(() => _activeSantri = santri);
-                                  _loadContent();
-                                }
-                              },
-                              onSwitchTap: _showSantriSwitcher,
-                            ),
+                            if (_activeSantri != null)
+                              SantriCardCarousel(
+                                santriList: _santriList,
+                                activeSantri: _activeSantri!,
+                                onSantriChanged: (santri) {
+                                  if (_activeSantri?.id != santri.id) {
+                                    setState(() => _activeSantri = santri);
+                                    // _loadContent();
+                                  }
+                                },
+                                onSwitchTap: _showSantriSwitcher,
+                              )
+                            else
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: Text("Data Santri tidak tersedia"),
+                                ),
+                              ),
 
                             const SizedBox(height: 24),
 
@@ -612,7 +689,7 @@ class _HomePageState extends State<HomePage> {
                                 GestureDetector(
                                   onTap: () => _navigateTo(
                                     ShoppingHistoryPage(
-                                      activeSantri: _activeSantri,
+                                      activeSantri: _activeSantri!,
                                       onBack: () => setState(
                                         () => _currentHomeSubPage = null,
                                       ),
@@ -676,34 +753,35 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildTransactionList() {
-    final transactions = [
-      {
-        'title': 'Kantin Santri',
-        'date': 'Today, 10:00',
-        'amount': -15000,
-        'icon': Icons.fastfood,
-        'color': Colors.orange,
-      },
-      {
-        'title': 'Koperasi Buku',
-        'date': 'Yesterday, 14:30',
-        'amount': -45000,
-        'icon': Icons.menu_book,
-        'color': Colors.blue,
-      },
-      {
-        'title': 'Laundry',
-        'date': '22 Jan, 08:00',
-        'amount': -20000,
-        'icon': Icons.local_laundry_service,
-        'color': Colors.teal,
-      },
-    ];
+    if (_activeSantri == null ||
+        _isLoadingContent && _recentTransactions.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_recentTransactions.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text("Belum ada transaksi terbaru"),
+        ),
+      );
+    }
+
+    // Show top 5
+    final transactionsToShow = _recentTransactions.take(5).toList();
 
     return Column(
-      children: transactions.map((tx) {
-        final amount = tx['amount'] as int;
-        final isExpense = amount < 0;
+      children: transactionsToShow.map((tx) {
+        final isExpense = tx.isExpense;
+        final color = isExpense ? Colors.orange : Colors.green;
+        final icon = isExpense
+            ? Icons.shopping_bag_outlined
+            : Icons.account_balance_wallet_outlined;
 
         return GlassContainer(
           margin: const EdgeInsets.only(bottom: 12),
@@ -725,14 +803,10 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (tx['color'] as Color).withOpacity(0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16), // Rounded square
                 ),
-                child: Icon(
-                  tx['icon'] as IconData,
-                  color: tx['color'] as Color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 16),
 
@@ -742,17 +816,19 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tx['title'] as String,
+                      tx.description.isNotEmpty ? tx.description : tx.category,
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         letterSpacing: 0.3,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      tx['date'] as String,
+                      tx.formattedDate,
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 12,
@@ -765,13 +841,13 @@ class _HomePageState extends State<HomePage> {
 
               // Amount
               Text(
-                "Rp ${amount.abs()}",
+                "${isExpense ? '-' : '+'} ${tx.formattedAmount}",
                 style: TextStyle(
                   color: isExpense
                       ? const Color(0xFFFF5252) // Softer Red
                       : const Color(0xFF43A047), // Natural Green
                   fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontSize: 14, // Slightly smaller to fit
                   letterSpacing: 0.5,
                 ),
               ),
