@@ -7,8 +7,9 @@ import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
 
 class StudentReportPage extends StatefulWidget {
   final SantriModel activeSantri;
+  final VoidCallback? onBack;
 
-  const StudentReportPage({super.key, required this.activeSantri});
+  const StudentReportPage({super.key, required this.activeSantri, this.onBack});
 
   @override
   State<StudentReportPage> createState() => _StudentReportPageState();
@@ -125,119 +126,145 @@ class _StudentReportPageState extends State<StudentReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    const bgEmerald50 = Color(0xFFECFDF5);
-
     return Scaffold(
-      backgroundColor: bgEmerald50,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 180, // Consistent with Achievements
-              pinned: true,
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(32),
-                ),
-              ),
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // 1. Fixed Pattern Background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.40,
+              child: Image.asset('assets/background.jpeg', fit: BoxFit.cover),
+            ),
+          ),
+
+          // 2. Main Content
+          NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverAppBar(
+                  expandedHeight: 160, // Consistent with Achievements
+                  pinned: true,
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(32),
                     ),
                   ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(32),
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 10,
+                            left: 24,
+                            right: 24,
+                            bottom: 40,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    "Rapor Santri",
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 14,
-                                    ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Rapor Santri",
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        widget.activeSantri.nama,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.activeSantri.nama,
-                                    style: const TextStyle(
+                                  CircleAvatar(
+                                    backgroundColor: Colors.white.withOpacity(
+                                      0.2,
+                                    ),
+                                    radius: 24,
+                                    child: const Icon(
+                                      Icons.school,
                                       color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                      size: 28,
                                     ),
                                   ),
                                 ],
                               ),
-                              CircleAvatar(
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                radius: 24,
-                                child: const Icon(
-                                  Icons.school,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      if (widget.onBack != null) {
+                        widget.onBack!();
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                  ),
+                  title: const Text(
+                    "Laporan Hasil Belajar",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  centerTitle: true,
                 ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Text(
-                "Laporan Hasil Belajar",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              centerTitle: true,
-            ),
-          ];
-        },
-        body: _isLoadingFilters
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 1. Filters Section
-                    _buildFilters(),
+              ];
+            },
+            body: _isLoadingFilters
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // 1. Filters Section
+                        _buildFilters(),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // 2. Report Content
-                    _isLoadingReport
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(40),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : _buildReportArea(),
-                  ],
-                ),
-              ),
+                        // 2. Report Content
+                        _isLoadingReport
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(40),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _buildReportArea(),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -247,11 +274,11 @@ class _StudentReportPageState extends State<StudentReportPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.04), // Softer shadow
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -395,12 +422,12 @@ class _StudentReportPageState extends State<StudentReportPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04), // Softer shadow
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(color: AppColors.primary.withOpacity(0.2)),
