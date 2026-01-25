@@ -8,6 +8,14 @@ class BillCategory {
   final String? description;
 
   const BillCategory({required this.id, required this.name, this.description});
+
+  factory BillCategory.fromJson(Map<String, dynamic> json) {
+    return BillCategory(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? 'Unknown',
+      description: json['description'],
+    );
+  }
 }
 
 class BillEvent {
@@ -22,6 +30,15 @@ class BillEvent {
     required this.eventDate,
     required this.amount,
   });
+
+  factory BillEvent.fromJson(Map<String, dynamic> json) {
+    return BillEvent(
+      id: json['id']?.toString() ?? '',
+      title: json['title'] ?? 'Unknown Event',
+      eventDate: DateTime.tryParse(json['event_date'] ?? '') ?? DateTime.now(),
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+    );
+  }
 }
 
 class StudentBill {
@@ -32,6 +49,7 @@ class StudentBill {
   final BillStatus status;
   final DateTime dueDate;
   final DateTime? paidAt;
+  final String? paymentMethod;
 
   // Relations
   final BillCategory? category;
@@ -45,9 +63,40 @@ class StudentBill {
     required this.status,
     required this.dueDate,
     this.paidAt,
+    this.paymentMethod,
     this.category,
     this.event,
   });
+
+  factory StudentBill.fromJson(Map<String, dynamic> json) {
+    BillStatus parsedStatus;
+    final statusStr = json['status']?.toString().toUpperCase() ?? 'UNPAID';
+
+    if (statusStr == 'PAID') {
+      parsedStatus = BillStatus.PAID;
+    } else if (statusStr == 'CANCELLED') {
+      parsedStatus = BillStatus.CANCELLED;
+    } else {
+      parsedStatus = BillStatus.UNPAID;
+    }
+
+    return StudentBill(
+      id: json['id']?.toString() ?? '',
+      studentId: json['student_id']?.toString() ?? '',
+      title: json['title'] ?? 'Tagihan',
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+      status: parsedStatus,
+      dueDate: DateTime.tryParse(json['due_date'] ?? '') ?? DateTime.now(),
+      paidAt: json['paid_at'] != null
+          ? DateTime.tryParse(json['paid_at'])
+          : null,
+      paymentMethod: json['payment_method'],
+      category: json['category'] != null
+          ? BillCategory.fromJson(json['category'])
+          : null,
+      event: json['event'] != null ? BillEvent.fromJson(json['event']) : null,
+    );
+  }
 
   // Helper Logic
   bool get isEventBill => event != null;
@@ -69,5 +118,16 @@ class StudentBill {
       decimalDigits: 0,
     );
     return currencyFormatter.format(amount);
+  }
+
+  String get displayStatus {
+    switch (status) {
+      case BillStatus.PAID:
+        return 'Sudah Dibayar';
+      case BillStatus.CANCELLED:
+        return 'Dibatalkan';
+      case BillStatus.UNPAID:
+        return 'Belum Dibayar';
+    }
   }
 }

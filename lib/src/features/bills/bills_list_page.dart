@@ -266,12 +266,19 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                   ];
                 },
-                body: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildList(generalBills, "Belum ada tagihan umum."),
-                    _buildList(eventBills, "Belum ada tagihan event."),
-                  ],
+                body: RefreshIndicator(
+                  onRefresh: () async {
+                    _loadBills();
+                    // Wait for the future to complete
+                    await _billsFuture;
+                  },
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildList(generalBills, "Belum ada tagihan umum."),
+                      _buildList(eventBills, "Belum ada tagihan event."),
+                    ],
+                  ),
                 ),
               );
             },
@@ -283,90 +290,111 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildList(List<StudentBill> bills, String emptyMessage) {
     if (bills.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: 400,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.assignment_turned_in_outlined,
-                size: 48,
-                color: Color(0xFF10B981),
-              ),
+                  child: const Icon(
+                    Icons.assignment_turned_in_outlined,
+                    size: 48,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  emptyMessage,
+                  style: const TextStyle(
+                    color: Color(0xFF065F46),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              emptyMessage,
-              style: const TextStyle(
-                color: Color(0xFF065F46), // textEmerald800
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
 
-    return ListView(
+    return ListView.separated(
       padding: const EdgeInsets.all(16),
-      children: [
-        ...bills.map(
-          (bill) => BillCard(
-            bill: bill,
-            onPay: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Bayar tagihan: ${bill.title}")),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: () {
-              if (widget.onViewHistory != null) {
-                widget.onViewHistory!();
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        PaymentHistoryPage(activeSantri: widget.activeSantri),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: bills.length + 1, // +1 for the button
+      separatorBuilder: (context, index) {
+        if (index == bills.length - 1) {
+          return const SizedBox(height: 24); // Before button
+        }
+        return const SizedBox(height: 16);
+      },
+      itemBuilder: (context, index) {
+        if (index == bills.length) {
+          // Last item: button
+          return Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (widget.onViewHistory != null) {
+                      widget.onViewHistory!();
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentHistoryPage(
+                            activeSantri: widget.activeSantri,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24), // Pill shape
+                  child: const Text(
+                    "Riwayat Tagihan",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
-            child: const Text(
-              "Riwayat Tagihan",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-      ],
+              const SizedBox(height: 32),
+            ],
+          );
+        }
+
+        // Regular bill card
+        return BillCard(
+          bill: bills[index],
+          onPay: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Bayar tagihan: ${bills[index].title}")),
+            );
+          },
+        );
+      },
     );
   }
 }
