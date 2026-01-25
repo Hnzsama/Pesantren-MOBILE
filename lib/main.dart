@@ -5,8 +5,13 @@ import 'package:pesantren_mobile/src/features/splash/splash_screen.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
+  await dotenv.load(fileName: ".env");
+  // PaymentService init moved to Splash Screen to avoid Activity context issues
   runApp(const PesantrenApp());
 }
 
