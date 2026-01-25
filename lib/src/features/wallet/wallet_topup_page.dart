@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
+import 'package:pesantren_mobile/src/features/payment/services/transaction_service.dart';
+import 'package:pesantren_mobile/src/features/payment/services/payment_service.dart';
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 
 class WalletTopUpPage extends StatefulWidget {
   final SantriModel activeSantri;
@@ -15,6 +18,7 @@ class WalletTopUpPage extends StatefulWidget {
 }
 
 class _WalletTopUpPageState extends State<WalletTopUpPage> {
+  late SantriModel _activeSantri;
   int _selectedAmount = 50000;
   final TextEditingController _customAmountController = TextEditingController();
   final List<int> _presetAmounts = [
@@ -28,34 +32,54 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
 
   int _selectedPaymentMethod = 0; // 0: QRIS, 1: VA BSI, 2: VA Mandiri
 
-  // Mock Payment Methods
+  // Payment Methods with Midtrans codes and fees
   final List<Map<String, dynamic>> _paymentMethods = [
     {
       'id': 0,
       'name': 'QRIS',
-      'desc': 'GoPay, OVO, Dana, ShopeePay',
+      'code': 'qris', // Will enable gopay + shopeepay for QRIS
+      'desc': 'Scan QRIS (GoPay/ShopeePay/DANA)',
       'icon': Icons.qr_code_scanner,
       'color': Colors.blue,
+      'fee_percent': 0.7, // 0.7% fee for QRIS
+      'fee_flat': 0,
     },
     {
       'id': 1,
-      'name': 'Bank Syariah Indonesia (BSI)',
-      'desc': 'Virtual Account',
+      'name': 'BCA Virtual Account',
+      'code': 'bca_va',
+      'desc': 'Virtual Account BCA',
       'icon': Icons.account_balance,
-      'color': Colors.teal,
+      'color': Colors.blue,
+      'fee_percent': 0, // No percentage fee
+      'fee_flat': 4000, // Flat Rp 4,000
     },
     {
       'id': 2,
+      'name': 'Bank Syariah Indonesia (BSI)',
+      'code': 'other_va', // BSI uses other_va
+      'desc': 'Virtual Account BSI',
+      'icon': Icons.account_balance,
+      'color': Colors.teal,
+      'fee_percent': 0,
+      'fee_flat': 4000, // Flat Rp 4,000
+    },
+    {
+      'id': 3,
       'name': 'Mandiri',
-      'desc': 'Virtual Account',
+      'code': 'echannel', // Mandiri Bill Payment
+      'desc': 'Mandiri Bill Payment',
       'icon': Icons.account_balance,
       'color': Colors.indigo,
+      'fee_percent': 0,
+      'fee_flat': 4000, // Flat Rp 4,000
     },
   ];
 
   @override
   void initState() {
     super.initState();
+    _activeSantri = widget.activeSantri;
     _customAmountController.addListener(() {
       if (_customAmountController.text.isNotEmpty) {
         setState(() {
@@ -71,6 +95,28 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
   void dispose() {
     _customAmountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refreshData() async {
+    try {
+      final authService = AuthService();
+      final user = await authService.getUser(); // Fetch fresh user data
+      if (user != null) {
+        // Find the updated santri data from the user object
+        final updatedSantri = user.students.firstWhere(
+          (s) => s.id == _activeSantri.id,
+          orElse: () => _activeSantri,
+        );
+
+        if (mounted) {
+          setState(() {
+            _activeSantri = updatedSantri;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error refreshing data: $e");
+    }
   }
 
   @override
@@ -159,7 +205,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    "Rp ${widget.activeSantri.uangSaku.toInt()}",
+                                    "Rp ${_activeSantri.uangSaku.toInt()}",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 36,
@@ -186,15 +232,12 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                           radius: 10,
                                           backgroundColor: Colors.white,
                                           backgroundImage:
-                                              widget.activeSantri.photoUrl !=
-                                                  null
+                                              _activeSantri.photoUrl != null
                                               ? NetworkImage(
-                                                  widget.activeSantri.photoUrl!,
+                                                  _activeSantri.photoUrl!,
                                                 )
                                               : null,
-                                          child:
-                                              widget.activeSantri.photoUrl ==
-                                                  null
+                                          child: _activeSantri.photoUrl == null
                                               ? const Icon(
                                                   Icons.person,
                                                   size: 12,
@@ -204,7 +247,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          "${widget.activeSantri.nama} • ${widget.activeSantri.kelas}",
+                                          "${_activeSantri.nama} • ${_activeSantri.kelas}",
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 13,
@@ -337,19 +380,78 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              // 1. Show Loading
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "Top Up Rp $_selectedAmount Berhasil (Simulasi)",
-                  ),
+                const SnackBar(
+                  content: Text("Memproses Pembayaran..."),
                   backgroundColor: AppColors.primary,
+                  duration: Duration(seconds: 1),
                 ),
               );
-              if (widget.onBack != null) {
-                widget.onBack!();
+
+              // 2. Mock Order ID (Unique)
+              final orderId = "TOPUP-${DateTime.now().millisecondsSinceEpoch}";
+
+              // 3. Get selected payment method and calculate fee
+              final selectedMethod = _paymentMethods[_selectedPaymentMethod];
+              final paymentCode = (selectedMethod['code'] as String?) ?? 'qris';
+
+              // Calculate fee based on payment method
+              final baseAmount = _selectedAmount;
+              final feePercent =
+                  (selectedMethod['fee_percent'] as num?)?.toDouble() ?? 0.0;
+              final feeFlat =
+                  (selectedMethod['fee_flat'] as num?)?.toInt() ?? 0;
+              final percentFee = (baseAmount * feePercent / 100).round();
+              final totalFee = feeFlat + percentFee;
+              // final totalAmount = baseAmount + totalFee; // No longer summing here for API
+
+              print("[Payment] Base: Rp ${baseAmount}, Fee: Rp ${totalFee}");
+
+              // 4. Fetch Snap Token with segregated amount and fee
+              final token = await TransactionService().getSnapToken(
+                amount: baseAmount, // Send only the topup nominal
+                adminFee: totalFee, // Send fee separately
+                orderId: orderId,
+                studentId: _activeSantri.id,
+                paymentType: paymentCode,
+              );
+
+              if (token != null) {
+                // 4. Start WebView Payment (new implementation)
+                try {
+                  await PaymentService().startPayment(context, token);
+
+                  // Refresh data after payment returns
+                  await _refreshData();
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Pembayaran berhasil diproses"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Show error message
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Error: ${e.toString()}"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               } else {
-                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Gagal mendapatkan token pembayaran"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
