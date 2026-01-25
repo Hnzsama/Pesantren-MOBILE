@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 
 import 'package:pesantren_mobile/src/features/home/home_page.dart';
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -24,14 +26,18 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      // Simulate network request
-      await Future.delayed(const Duration(seconds: 2));
+      final success = await _authService.login(
+        _usernameController.text,
+        _passwordController.text,
+      );
 
       if (!mounted) return;
 
-      // Mock validation (Accept: admin / admin)
-      if (_usernameController.text == 'admin' &&
-          _passwordController.text == 'admin') {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Login Berhasil!'),
@@ -50,10 +56,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 

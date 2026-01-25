@@ -1,3 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/kajian/models/kajian_model.dart';
@@ -14,7 +16,7 @@ class KajianCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -35,13 +37,33 @@ class KajianCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    video.thumbnailUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      debugPrint(
+                        'Loading Kajian thumbnail: ${video.thumbnailUrl}',
+                      );
+                      return CachedNetworkImage(
+                        imageUrl: video.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        httpHeaders: const {'User-Agent': 'Mozilla/5.0'},
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) {
+                          debugPrint('Kajian image error for $url: $error');
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                   Container(
                     color: Colors.black.withOpacity(0.3), // Dim overlay

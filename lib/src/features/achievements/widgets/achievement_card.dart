@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/achievements/models/achievement_model.dart';
@@ -14,11 +15,11 @@ class AchievementCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24), // Softer radius
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.04), // Softer shadow
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -91,21 +92,64 @@ class AchievementCard extends StatelessWidget {
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        achievement.images[index],
-                        width: achievement.images.length > 1
-                            ? 200
-                            : MediaQuery.of(context).size.width -
-                                  64, // Wider if single
-                        height: 160,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: 200,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Icon(Icons.broken_image, color: Colors.grey),
-                          ),
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final imageUrl = achievement.images[index];
+                          debugPrint('Loading Achievement image: $imageUrl');
+                          return Image.network(
+                            imageUrl,
+                            width: achievement.images.length > 1
+                                ? 200
+                                : MediaQuery.of(context).size.width - 64,
+                            height: 160,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint(
+                                'Achievement image error for $imageUrl: $error',
+                              );
+                              return Container(
+                                color: Colors.grey[300],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey[600],
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Gagal memuat gambar',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                   );

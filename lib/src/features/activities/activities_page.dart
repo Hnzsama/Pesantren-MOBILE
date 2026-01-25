@@ -6,7 +6,10 @@ import 'package:pesantren_mobile/src/features/activities/service/activity_servic
 import 'package:pesantren_mobile/src/features/activities/widgets/activity_card.dart';
 
 class ActivitiesPage extends StatefulWidget {
-  const ActivitiesPage({super.key});
+  final VoidCallback? onBack;
+  final String? studentId; // Accept student ID from parent
+
+  const ActivitiesPage({super.key, this.onBack, this.studentId});
 
   @override
   State<ActivitiesPage> createState() => _ActivitiesPageState();
@@ -22,22 +25,28 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
   // Future
   late Future<List<ActivityWithStatus>> _activitiesFuture;
 
-  // Mock Student Context (Ensure this matches your App's Auth State in real app)
-  final String _studentId = 'student-1';
-  final String _studentLevel =
-      'level-high'; // or 'level-low', or anything matching mock
+  String? _studentId;
 
   @override
   void initState() {
     super.initState();
+    _studentId = widget.studentId;
     _fetchData();
   }
 
   void _fetchData() {
+    // Only fetch if we have a student ID
+    if (_studentId == null) {
+      setState(() {
+        _activitiesFuture = Future.value([]);
+      });
+      return;
+    }
+
     setState(() {
       _activitiesFuture = _service.getStudentActivities(
-        studentId: _studentId,
-        levelId: _studentLevel,
+        studentId: _studentId!,
+        levelId: null, // Not needed for API call
         date: _selectedDate,
         type: _selectedType,
       );
@@ -70,19 +79,42 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // bgEmerald50 equivalent
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
         title: const Text("Aktivitas"),
         centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          _buildFilterSection(),
-          _buildLegend(),
-          Expanded(child: _buildActivityList()),
+          // 1. Fixed Pattern Background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.40,
+              child: Image.asset('assets/background.jpeg', fit: BoxFit.cover),
+            ),
+          ),
+
+          // 2. Content
+          Column(
+            children: [
+              _buildFilterSection(),
+              _buildLegend(),
+              Expanded(child: _buildActivityList()),
+            ],
+          ),
         ],
       ),
     );
@@ -90,8 +122,19 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
   Widget _buildFilterSection() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

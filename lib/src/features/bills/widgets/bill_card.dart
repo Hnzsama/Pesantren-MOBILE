@@ -17,12 +17,14 @@ class BillCard extends StatelessWidget {
     final isPaid = bill.status == BillStatus.PAID;
 
     // Muted color scheme for cancelled
-    final cardColor = isCancelled ? Colors.grey.shade100 : Colors.white;
+    final cardColor = isCancelled
+        ? Colors.grey.shade100
+        : const Color(0xFFE8F5E9); // Mint/Sage Green
     final textColor = isCancelled ? Colors.grey : AppColors.textPrimary;
     final labelColor = isCancelled ? Colors.grey : AppColors.primary;
     final borderColor = isCancelled
         ? Colors.grey.shade300
-        : Colors.grey.shade200;
+        : Colors.transparent; // Remove border for clean look
 
     // 2. Display Logic
     final displayDate = bill.displayDate;
@@ -60,8 +62,21 @@ class BillCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
+          // Match StudentIdCard Gradient for active/unpaid/paid bills coverage
+          gradient: isCancelled
+              ? null
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    const Color(0xFFE8F5E9),
+                    const Color(0xFFA5D6A7), // Darker end for volume
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ),
+          color: isCancelled ? cardColor : null,
+          borderRadius: BorderRadius.circular(20), // More rounded
           border: Border.all(color: borderColor),
           boxShadow: isCancelled
               ? []

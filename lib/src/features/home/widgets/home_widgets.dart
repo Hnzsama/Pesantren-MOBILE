@@ -204,98 +204,91 @@ class StudentIdCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Keep original emerald colors
-    const bgEmerald50 = Color(0xFFECFDF5);
-    const bgEmerald100 = Color(0xFFD1FAE5);
-    const textEmerald800 = Color(0xFF065F46); // Dark Green Text
-    const textEmerald600 = Color(0xFF059669);
+    // Premium Green Palette
+    const accentGreen = Color(0xFF43A047);
+    const textDark = Color(0xFF1B5E20);
 
-    // Simulate "Credit Card" Layout
-    // ISO/IEC 7810 ID-1 standard: 85.60 × 53.98 mm
-    // Aspect Ratio: 8.56 / 5.398 ≈ 1.585
+    // ISO/IEC 7810 ID-1 aspect ratio
     return AspectRatio(
       aspectRatio: 85.60 / 53.98,
       child: Container(
-        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
-          color: bgEmerald50,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          // 3D Volume Effect: Stronger Gradient + Border Bevel
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              const Color(0xFFE8F5E9),
+              const Color(0xFFA5D6A7), // Darker end for volume
+            ],
+            stops: const [0.0, 0.45, 1.0],
+          ),
+          border: Border.all(color: Colors.white, width: 1.5),
+          // Removed Drop Shadow as requested ('hilangkan shadow')
+          // Volume comes from the internal gradient and border highlight
         ),
-        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            // Background Pattern (Waves)
+            // Depth/Texture Pattern
             Positioned(
-              top: -50,
-              right: -50,
+              top: -60,
+              right: -60,
               child: Container(
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
-                  color: bgEmerald100.withOpacity(0.5),
                   shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -80,
-              left: -30,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  color: bgEmerald100.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            // Shine Effect (Subtle Overlay)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  gradient: RadialGradient(
                     colors: [
-                      Colors.white.withOpacity(0.1),
-                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.4),
                       Colors.white.withOpacity(0.0),
                     ],
-                    stops: const [0.0, 0.4, 1.0],
                   ),
                 ),
               ),
             ),
 
-            // Card Content
+            // Content Container
             Padding(
-              padding: const EdgeInsets.all(20.0), // Reduced from 24
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Header: Logo Left, Badge Right
+                  // HEADER
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Small Logo
-                      Image.asset('assets/logo.png', width: 60, height: 60),
+                      // Logo with 3D touch
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          width: 42,
+                          height: 42,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text(
                               "PESANTREN ID",
                               style: TextStyle(
-                                color: textEmerald800,
+                                color: textDark,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
                                 fontStyle: FontStyle.italic,
@@ -304,37 +297,49 @@ class StudentIdCard extends StatelessWidget {
                             Text(
                               "Kartu Tanda Santri Elektronik",
                               style: TextStyle(
-                                color: textEmerald600,
+                                color: accentGreen,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // "Active" Badge or similar
+                      // Active Badge (Pill)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: const LinearGradient(
+                            colors: [Colors.blueAccent, Colors.blue],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
-                            BoxShadow(color: Colors.black12, blurRadius: 4),
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: const Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.verified, size: 14, color: Colors.blue),
+                            Icon(
+                              Icons.verified_user,
+                              size: 10,
+                              color: Colors.white,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               "Active",
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blue,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -345,44 +350,40 @@ class StudentIdCard extends StatelessWidget {
 
                   const Spacer(),
 
-                  // 2. Big Number (Like Credit Card)
-                  // Minimized size/spacing to fit 1 line
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      "1000  4633  3308  ${santri.id.padLeft(4, '0')}",
-                      style: const TextStyle(
-                        fontFamily: 'Courier',
-                        fontSize: 18, // Reduced from 22
-                        fontWeight: FontWeight.bold,
-                        color: textEmerald800,
-                        letterSpacing: 1.5, // Reduced from 2.0
-                        shadows: [
-                          Shadow(
-                            blurRadius: 1,
-                            color: Colors.white,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
-                      ),
+                  // CARD NUMBER (Embossed look)
+                  Text(
+                    "1000  4633  3308  8899",
+                    style: TextStyle(
+                      fontFamily: 'Courier',
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: textDark,
+                      letterSpacing: 2.2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.white.withOpacity(0.8),
+                          offset: const Offset(1, 1),
+                          blurRadius: 1,
+                        ),
+                      ],
                     ),
                   ),
 
                   const Spacer(),
 
-                  // 3. Bottom Info: Name & School
+                  // FOOTER INFO
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "NAMA SANTRI",
                             style: TextStyle(
-                              fontSize: 8,
+                              fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: textEmerald600,
+                              color: accentGreen.withOpacity(0.8),
                               letterSpacing: 1.0,
                             ),
                           ),
@@ -390,29 +391,71 @@ class StudentIdCard extends StatelessWidget {
                           Text(
                             santri.nama.toUpperCase(),
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: textEmerald800,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: textDark,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          Text(
-                            santri.kelas,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: textEmerald600,
-                            ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Text(
+                                "KELAS ${santri.kelas.split(' ').first}",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: textDark.withOpacity(0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: accentGreen,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                santri.departmentCode,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: textDark.withOpacity(0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      // QR/Barcode Icon (Larger)
-                      Icon(
-                        Icons.qr_code_2,
-                        size: 64, // Increased from 40
-                        color: textEmerald800.withOpacity(0.8),
+                      // QR Code
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(Icons.qr_code_2, size: 44, color: textDark),
                       ),
                     ],
                   ),
                 ],
+              ),
+            ),
+
+            // Optional: Slight Gloss Overlay
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                  ),
+                ),
               ),
             ),
           ],
@@ -539,19 +582,31 @@ class MenuIcon extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GlassContainer(
-            width: 56, // Fixed width for square
-            height: 56, // Fixed height for square
-            padding: EdgeInsets.zero,
-            borderRadius: BorderRadius.circular(18),
-            color: backgroundColor ?? AppColors.background,
-            blur: 10,
-            opacity: 0.9,
+          Container(
+            width: 52, // Slightly reduced
+            height: 52,
+            decoration: BoxDecoration(
+              color:
+                  backgroundColor?.withOpacity(0.9) ??
+                  AppColors.background, // Less transparent
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.black.withOpacity(0.05),
+                width: 1,
+              ), // Subtle border
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2), // Light shadow
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: Center(
               child: Icon(
                 icon,
                 color: iconColor ?? AppColors.primary,
-                size: 24,
+                size: 26,
               ),
             ),
           ),
@@ -563,8 +618,10 @@ class MenuIcon extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 12,
-              color: AppColors.textPrimary,
+              color:
+                  AppColors.textPrimary, // Dark text for visibility on white bg
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
         ],
