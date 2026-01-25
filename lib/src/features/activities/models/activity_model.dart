@@ -22,10 +22,10 @@ class Activity {
 
   factory Activity.fromJson(Map<String, dynamic> json) {
     return Activity(
-      id: json['id'],
-      schoolId: json['school_id'],
-      levelId: json['level_id'],
-      name: json['name'],
+      id: json['id']?.toString() ?? '',
+      schoolId: json['school_id']?.toString() ?? '',
+      levelId: json['level_id']?.toString(),
+      name: json['name'] ?? '',
       type: ActivityType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => ActivityType.daily,
@@ -52,6 +52,20 @@ class ActivityAttendance {
     required this.status,
     this.remarks,
   });
+
+  factory ActivityAttendance.fromJson(Map<String, dynamic> json) {
+    return ActivityAttendance(
+      id: json['id']?.toString() ?? '',
+      activityId: json['activity_id']?.toString() ?? '',
+      studentId: json['student_id']?.toString() ?? '',
+      date: DateTime.parse(json['date']),
+      status: AttendanceStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => AttendanceStatus.pending,
+      ),
+      remarks: json['remarks'],
+    );
+  }
 }
 
 /// Helper model to combine Activity with its daily status
@@ -62,4 +76,13 @@ class ActivityWithStatus {
   const ActivityWithStatus({required this.activity, this.attendance});
 
   AttendanceStatus get status => attendance?.status ?? AttendanceStatus.pending;
+
+  factory ActivityWithStatus.fromJson(Map<String, dynamic> json) {
+    return ActivityWithStatus(
+      activity: Activity.fromJson(json['activity']),
+      attendance: json['attendance'] != null
+          ? ActivityAttendance.fromJson(json['attendance'])
+          : null,
+    );
+  }
 }
