@@ -1,142 +1,69 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:pesantren_mobile/src/features/activities/models/activity_model.dart';
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 
 class ActivityService {
-  // Mock 'Activities' Table
-  final List<Activity> _mockActivities = [
-    // Daily
-    const Activity(
-      id: 'act1',
-      schoolId: 'school-1',
-      name: 'Shalat Subuh Berjamaah',
-      type: ActivityType.daily,
-      description: 'Wajib hadir di masjid sebelum iqamah.',
-    ),
-    const Activity(
-      id: 'act2',
-      schoolId: 'school-1',
-      name: 'Mengaji Kitab Pagi',
-      type: ActivityType.daily,
-      description: 'Membaca kitab kuning sesuai kelas.',
-    ),
-    const Activity(
-      id: 'act3',
-      schoolId: 'school-1',
-      name: 'Shalat Isya Berjamaah',
-      type: ActivityType.daily,
-    ),
-    // Rutinan (Weekly)
-    const Activity(
-      id: 'act4',
-      schoolId: 'school-1',
-      name: 'Rotibul Haddad',
-      type: ActivityType.rutinan,
-      description: 'Setiap malam Jumat.',
-    ),
-    const Activity(
-      id: 'act5',
-      schoolId: 'school-1',
-      name: 'Roan Akbar',
-      type: ActivityType.rutinan,
-      description: 'Kerja bakti setiap hari Minggu pagi.',
-    ),
-    // Level Specific
-    const Activity(
-      id: 'act6',
-      schoolId: 'school-1',
-      levelId: 'level-high', // Mock Level ID
-      name: 'Pendalaman Materi Fiqih',
-      type: ActivityType.daily,
-      description: 'Khusus tingkat Ulya/Aliyah.',
-    ),
-  ];
-
-  // Mock 'ActivityAttendances' Table
-  final List<ActivityAttendance> _mockAttendances = [
-    // Yesterday: Subuh (Present)
-    ActivityAttendance(
-      id: 'att1',
-      activityId: 'act1',
-      studentId: 'student-1',
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      status: AttendanceStatus.present,
-    ),
-    // Today: Subuh (Late)
-    ActivityAttendance(
-      id: 'att2',
-      activityId: 'act1',
-      studentId: 'student-1',
-      date: DateTime.now(),
-      status: AttendanceStatus.late,
-      remarks: 'Bangun kesiangan dikit.',
-    ),
-    // Today: Mengaji Pagi (Present)
-    ActivityAttendance(
-      id: 'att3',
-      activityId: 'act2',
-      studentId: 'student-1',
-      date: DateTime.now(),
-      status: AttendanceStatus.present,
-    ),
-    // Today: Shalat Isya (Absent - example future/not recorded yet or absent)
-    // Let's assume we fetch data. If no record, it's 'pending/not recorded'.
-  ];
-
-  /// Simulates fetching activities for a student on a specific date.
+  /// Fetches activities for a student on a specific date.
   ///
-  /// Logic:
-  /// 1. Get definitions suitable for student (level check).
-  /// 2. Filter definitions by type (optional).
-  /// 3. Find attendance records for (student + date + activity).
-  /// 4. Merge.
+  /// Calls GET /api/activities with student_id, date, and optional type filter.
   Future<List<ActivityWithStatus>> getStudentActivities({
     required String studentId,
-    required String? levelId,
+    required String? levelId, // Not used in API call, kept for compatibility
     required DateTime date,
     ActivityType? type, // null for 'Semua'
   }) async {
-    await Future.delayed(const Duration(milliseconds: 800)); // Sim network
+    final authService = AuthService();
+    final token = await authService.getToken();
 
-    // 1. Filter Definitions
-    final availableActivities = _mockActivities.where((act) {
-      // Level Check: Null means all levels. If set, must match student's level.
-      final matchesLevel = act.levelId == null || act.levelId == levelId;
+    if (token == null) {
+      debugPrint('No token found');
+      return [];
+    }
 
-      // Type Check
-      final matchesType = type == null || act.type == type;
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
 
-      return matchesLevel && matchesType;
-    }).toList();
+    final queryParams = <String, String>{
+      'student_id': studentId,
+      'date': _formatDate(date), // YYYY-MM-DD
+    };
 
-    // 2. Map Status
-    final List<ActivityWithStatus> results = availableActivities.map((
-      activity,
-    ) {
-      final attendance = _mockAttendances.firstWhere(
-        (att) =>
-            att.activityId == activity.id &&
-            att.studentId == studentId &&
-            isSameDate(att.date, date),
-        orElse: () => ActivityAttendance(
-          // Return a dummy or handle null
-          id: 'temp',
-          activityId: activity.id,
-          studentId: studentId,
-          date: date,
-          status: AttendanceStatus.pending,
-        ),
+    if (type != null) {
+      queryParams['type'] = type.name; // 'daily' or 'rutinan'
+    }
+
+    final uri = Uri.parse(
+      '$baseUrl/activities',
+    ).replace(queryParameters: queryParams);
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
 
-      // If ID is 'temp', it means no record found => Pending/Belum Dicatat
-      return ActivityWithStatus(
-        activity: activity,
-        attendance: attendance.id == 'temp' ? null : attendance,
-      );
-    }).toList();
+      debugPrint('Activities Response: ${response.statusCode}');
 
-    return results;
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => ActivityWithStatus.fromJson(item)).toList();
+      } else {
+        debugPrint('Failed to load activities: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching activities: $e');
+      return [];
+    }
   }
 
-  bool isSameDate(DateTime d1, DateTime d2) {
-    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

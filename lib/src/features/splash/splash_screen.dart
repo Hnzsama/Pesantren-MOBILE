@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
+import 'package:pesantren_mobile/src/features/auth/login_page.dart';
 import 'package:pesantren_mobile/src/features/home/home_page.dart';
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,31 +14,39 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // Wait for the first frame to ensure Activity context is available for Midtrans SDK
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
   }
 
   Future<void> _initializeApp() async {
-    // Run Minimum Timer (2s) and Auth Check concurrently
-    final minTimer = Future.delayed(const Duration(seconds: 2));
-    final authCheck = _checkAuthStatus();
+    // Run Minimum Timer (2s)
+    await Future.delayed(const Duration(seconds: 2));
 
-    await Future.wait([minTimer, authCheck]);
+    // Check Auth
+    final isAuthenticated = await _checkAuthStatus();
 
     if (!mounted) return;
 
-    // Navigate to Login (or Home if auth was implemented)
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const HomePage()),
-    );
+    if (isAuthenticated) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
   }
 
   Future<bool> _checkAuthStatus() async {
-    // Simulate checking token / local storage
-    await Future.delayed(const Duration(seconds: 1));
-    return false; // Return false to indicate not logged in
+    return await _authService.checkAuth();
   }
 
   @override

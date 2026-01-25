@@ -1,3 +1,3 @@
 # pesantren_mobile
 
-A new Flutter project.
+Aplikasi Wali Santri untuk memantau saldo, tagihan, aktivitas, dan perkembangan santri secara real-time.

@@ -1,4 +1,9 @@
 import 'package:pesantren_mobile/src/features/achievements/models/achievement_model.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 
 class AchievementService {
   // Mock Data attached to Students
@@ -6,6 +11,7 @@ class AchievementService {
   // "1" = Ahmad Fulan
   // "2" = Siti Aminah
 
+  // Mock Data attached to Students (Fallback)
   static final List<AchievementModel> _mockAchievements = [
     AchievementModel(
       id: '1',
@@ -19,29 +25,60 @@ class AchievementService {
         'https://picsum.photos/id/1015/400/300',
       ],
     ),
-    AchievementModel(
-      id: '2',
-      studentId: '1',
-      title: 'Santri Teladan Bulan November',
-      dateAchieved: DateTime(2025, 11, 30),
-      description:
-          'Penghargaan atas kedisiplinan dan akhlak mulia selama bulan November.',
-      images: ['https://picsum.photos/id/1025/400/300'],
-    ),
-    AchievementModel(
-      id: '3',
-      studentId: '2',
-      title: 'Juara 2 Kaligrafi Nasional',
-      dateAchieved: DateTime(2025, 10, 20),
-      description:
-          'Kompetisi seni kaligrafi tingkat nasional yang diadakan di Jakarta.',
-      images: [], // Test no image
-    ),
   ];
 
-  Future<List<AchievementModel>> getAchievements(String studentId) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    return _mockAchievements.where((a) => a.studentId == studentId).toList();
+  Future<List<AchievementModel>> getAchievements(
+    String studentId, {
+    String? schoolId,
+  }) async {
+    final authService = AuthService();
+    final token = await authService.getToken();
+
+    if (token == null) {
+      debugPrint('No token found, returning mock data');
+      return _mockAchievements.where((a) => a.studentId == studentId).toList();
+    }
+
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
+    // Append school_id query parameter if available
+    final queryParams = <String, String>{};
+    if (schoolId != null) queryParams['school_id'] = schoolId;
+
+    final uri = Uri.parse(
+      '$baseUrl/prestasi',
+    ).replace(queryParameters: queryParams);
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('Prestasi Code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> list = data['data'] ?? (data is List ? data : []);
+
+        final allAchievements = list
+            .map((json) => AchievementModel.fromJson(json))
+            .toList();
+
+        // Client-side filtering by studentId if API doesn't support it yet
+        return allAchievements.where((a) => a.studentId == studentId).toList();
+      } else {
+        debugPrint('Failed to load achievements: ${response.body}');
+        return _mockAchievements
+            .where((a) => a.studentId == studentId)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching achievements: $e');
+      return _mockAchievements.where((a) => a.studentId == studentId).toList();
+    }
   }
 }
