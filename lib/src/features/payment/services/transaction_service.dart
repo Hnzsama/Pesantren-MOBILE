@@ -8,12 +8,12 @@ import 'package:pesantren_mobile/src/features/transactions/models/transaction_mo
 class TransactionService {
   final AuthService _authService = AuthService();
 
-  Future<String?> getSnapToken({
+  Future<Map<String, dynamic>?> getSnapToken({
     required int amount,
     required String orderId,
     required String studentId,
     required String paymentType,
-    int? adminFee, // Added adminFee
+    int? adminFee,
   }) async {
     try {
       final token = await _authService.getToken();
@@ -53,18 +53,44 @@ class TransactionService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data is Map && data.containsKey('snap_token')) {
-          return data['snap_token'];
-        } else if (data is Map && data.containsKey('token')) {
-          return data['token'];
-        }
-        return null;
+        return data as Map<String, dynamic>;
       } else {
         debugPrint("Failed to get snap token: ${response.body}");
         return null;
       }
     } catch (e) {
       debugPrint("Error fetching snap token: $e");
+      return null;
+    }
+  }
+
+  Future<TransactionModel?> getTransactionById(String id) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return null;
+
+      final baseUrl = dotenv.env['APP_URL'] ?? "";
+      final url = Uri.parse('$baseUrl/transactions/$id');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint("Get Transaction Status: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return TransactionModel.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Error fetching transaction details: $e");
       return null;
     }
   }

@@ -10,7 +10,7 @@ class PaymentService {
 
   /// Start payment using WebView (fallback solution)
   /// This bypasses the native SDK which has Activity binding issues
-  Future<void> startPayment(BuildContext context, String snapToken) async {
+  Future<bool?> startPayment(BuildContext context, String snapToken) async {
     print("[PaymentService] Starting payment with WebView");
     print("[PaymentService] Snap Token: $snapToken");
 
@@ -30,6 +30,8 @@ class PaymentService {
       } else {
         print("[PaymentService] Payment result unknown or user went back");
       }
+
+      return result;
     } catch (e) {
       print("[PaymentService] Error during payment: $e");
       rethrow;

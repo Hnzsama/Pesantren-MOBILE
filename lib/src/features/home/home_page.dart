@@ -310,8 +310,10 @@ class _HomePageState extends State<HomePage> {
                             _navigateTo(
                               WalletTopUpPage(
                                 activeSantri: _activeSantri!,
-                                onBack: () =>
-                                    setState(() => _currentHomeSubPage = null),
+                                onBack: () {
+                                  setState(() => _currentHomeSubPage = null);
+                                  _loadContent();
+                                },
                               ),
                             );
                           },
@@ -508,10 +510,11 @@ class _HomePageState extends State<HomePage> {
                         onTap: () => _navigateTo(
                           WalletTopUpPage(
                             activeSantri:
-                                _activeSantri ??
-                                MockData.santriList.first, // Fallback safe
-                            onBack: () =>
-                                setState(() => _currentHomeSubPage = null),
+                                _activeSantri ?? MockData.santriList.first,
+                            onBack: () {
+                              setState(() => _currentHomeSubPage = null);
+                              _loadContent();
+                            },
                           ),
                         ),
                         borderRadius: BorderRadius.circular(16),

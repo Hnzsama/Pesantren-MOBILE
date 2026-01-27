@@ -410,7 +410,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
               print("[Payment] Base: Rp ${baseAmount}, Fee: Rp ${totalFee}");
 
               // 4. Fetch Snap Token with segregated amount and fee
-              final token = await TransactionService().getSnapToken(
+              final responseData = await TransactionService().getSnapToken(
                 amount: baseAmount, // Send only the topup nominal
                 adminFee: totalFee, // Send fee separately
                 orderId: orderId,
@@ -418,21 +418,67 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                 paymentType: paymentCode,
               );
 
-              if (token != null) {
+              if (responseData != null &&
+                  responseData.containsKey('snap_token')) {
+                final token = responseData['snap_token'];
+                final transactionId = responseData['transaction_id'];
+
                 // 4. Start WebView Payment (new implementation)
                 try {
-                  await PaymentService().startPayment(context, token);
+                  // ignore: unused_local_variable
+                  final result = await PaymentService().startPayment(
+                    context,
+                    token,
+                  );
 
-                  // Refresh data after payment returns
-                  await _refreshData();
-
-                  if (mounted) {
+                  // 5. Verify Transaction Status with Backend
+                  // Regardless of what webview says, we trust the backend
+                  if (transactionId != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Pembayaran berhasil diproses"),
-                        backgroundColor: Colors.green,
+                        content: Text("Memeriksa status pembayaran..."),
+                        duration: Duration(seconds: 1),
                       ),
                     );
+
+                    final transaction = await TransactionService()
+                        .getTransactionById(transactionId);
+
+                    // Refresh data after payment returns
+                    await _refreshData();
+
+                    if (mounted) {
+                      if (transaction?.status == 'PAID') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Pembayaran BERHASIL! Saldo bertambah.",
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        // Optional: Navigate back or clear form
+                      } else if (transaction?.status == 'CANCELLED' ||
+                          transaction?.status == 'EXPIRED') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Pembayaran Gagal atau Dibatalkan"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } else {
+                        // UNPAID or PENDING
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Menunggu Pembayaran..."),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
+                    }
+                  } else {
+                    // Fallback if no transaction_id (should not happen based on doc)
+                    await _refreshData();
                   }
                 } catch (e) {
                   // Show error message

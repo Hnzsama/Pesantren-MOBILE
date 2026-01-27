@@ -9,6 +9,7 @@ class TransactionModel {
   final double amount;
   final String description;
   final String paymentMethod;
+  final String status;
   final DateTime createdAt;
 
   const TransactionModel({
@@ -20,6 +21,7 @@ class TransactionModel {
     required this.amount,
     required this.description,
     required this.paymentMethod,
+    required this.status,
     required this.createdAt,
   });
 
@@ -33,6 +35,7 @@ class TransactionModel {
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
       description: json['description'] ?? '',
       paymentMethod: json['payment_method'] ?? '',
+      status: json['status'] ?? 'UNPAID',
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
