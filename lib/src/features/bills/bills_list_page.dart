@@ -5,6 +5,7 @@ import 'package:pesantren_mobile/src/features/bills/models/bill_model.dart';
 import 'package:pesantren_mobile/src/features/bills/service/bill_service.dart';
 import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
+import 'package:pesantren_mobile/src/features/bills/bill_detail_page.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 
 /// Page for displaying unpaid bills (General and Event).
@@ -125,6 +126,15 @@ class _BillsListPageState extends State<BillsListPage>
                           bottom: Radius.circular(32),
                         ),
                       ),
+                      actions: [
+                        IconButton(
+                          onPressed: () {
+                            _loadBills();
+                          },
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          tooltip: "Refresh Data",
+                        ),
+                      ],
                       flexibleSpace: FlexibleSpaceBar(
                         background: Container(
                           decoration: const BoxDecoration(
@@ -149,30 +159,35 @@ class _BillsListPageState extends State<BillsListPage>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Tagihan Aktif",
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.7,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Tagihan Aktif",
+                                              style: TextStyle(
+                                                color: Colors.white.withOpacity(
+                                                  0.7,
+                                                ),
+                                                fontSize: 14,
                                               ),
-                                              fontSize: 14,
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            widget.activeSantri.nama,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              widget.activeSantri.nama,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
+                                      const SizedBox(width: 16),
                                       CircleAvatar(
                                         backgroundColor: Colors.white
                                             .withOpacity(0.2),
@@ -266,19 +281,12 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                   ];
                 },
-                body: RefreshIndicator(
-                  onRefresh: () async {
-                    _loadBills();
-                    // Wait for the future to complete
-                    await _billsFuture;
-                  },
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildList(generalBills, "Belum ada tagihan umum."),
-                      _buildList(eventBills, "Belum ada tagihan event."),
-                    ],
-                  ),
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildList(generalBills, "Belum ada tagihan umum."),
+                    _buildList(eventBills, "Belum ada tagihan event."),
+                  ],
                 ),
               );
             },
@@ -389,8 +397,18 @@ class _BillsListPageState extends State<BillsListPage>
         return BillCard(
           bill: bills[index],
           onPay: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Bayar tagihan: ${bills[index].title}")),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BillDetailPage(
+                  bill: bills[index],
+                  activeSantri: widget.activeSantri,
+                  onPaymentSuccess: () {
+                    // Refresh current list if payment was successful
+                    _loadBills();
+                  },
+                ),
+              ),
             );
           },
         );

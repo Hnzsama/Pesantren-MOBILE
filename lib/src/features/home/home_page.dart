@@ -360,6 +360,7 @@ class _HomePageState extends State<HomePage> {
 
         if (_navIndex == 0 && _currentHomeSubPage != null) {
           setState(() => _currentHomeSubPage = null); // Back to Dashboard
+          _loadContent(); // Refresh content (balance)
           return;
         }
 
@@ -507,16 +508,25 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
-                        onTap: () => _navigateTo(
-                          WalletTopUpPage(
-                            activeSantri:
-                                _activeSantri ?? MockData.santriList.first,
-                            onBack: () {
-                              setState(() => _currentHomeSubPage = null);
-                              _loadContent();
-                            },
-                          ),
-                        ),
+                        onTap: () {
+                          if (_activeSantri == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Data santri belum tersedia"),
+                              ),
+                            );
+                            return;
+                          }
+                          _navigateTo(
+                            WalletTopUpPage(
+                              activeSantri: _activeSantri!,
+                              onBack: () {
+                                setState(() => _currentHomeSubPage = null);
+                                _loadContent();
+                              },
+                            ),
+                          );
+                        },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           width: 50,
@@ -565,179 +575,205 @@ class _HomePageState extends State<HomePage> {
                       ),
 
                       // Content
-                      SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. Menu Grid
-                            if (_activeSantri == null)
-                              const Center(child: Text("Silahkan tunggu...")),
-                            if (_activeSantri != null)
-                              GridView.count(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount: 4,
-                                mainAxisSpacing: 16, // Reduced spacing
-                                crossAxisSpacing: 12,
-                                padding: EdgeInsets.zero,
+                      RefreshIndicator(
+                        onRefresh: _loadContent,
+                        color: AppColors.primary,
+                        backgroundColor: Colors.white,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 1. Menu Grid
+                              if (_activeSantri == null)
+                                _isLoadingContent
+                                    ? const Center(
+                                        child: Text("Silahkan tunggu..."),
+                                      )
+                                    : const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(20.0),
+                                          child: Text(
+                                            "Belum ada data santri yang terhubung.\nSilahkan hubungi admin pesantren.",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                              if (_activeSantri != null)
+                                GridView.count(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount: 4,
+                                  mainAxisSpacing: 16, // Reduced spacing
+                                  crossAxisSpacing: 12,
+                                  padding: EdgeInsets.zero,
+                                  children: [
+                                    MenuIcon(
+                                      label: "Rapor",
+                                      icon: Icons.school,
+                                      backgroundColor: const Color(
+                                        0xFFF3E5F5,
+                                      ), // Purple 50
+                                      iconColor: const Color(
+                                        0xFF9C27B0,
+                                      ), // Purple
+                                      onTap: () => _navigateTo(
+                                        StudentReportPage(
+                                          activeSantri: _activeSantri!,
+                                          onBack: () => setState(
+                                            () => _currentHomeSubPage = null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    MenuIcon(
+                                      label: "Prestasi",
+                                      icon: Icons.emoji_events,
+                                      backgroundColor: const Color(
+                                        0xFFFFF3E0,
+                                      ), // Orange 50
+                                      iconColor: const Color(
+                                        0xFFFF9800,
+                                      ), // Orange
+                                      onTap: () => _navigateTo(
+                                        AchievementsPage(
+                                          activeSantri: _activeSantri!,
+                                          onBack: () => setState(
+                                            () => _currentHomeSubPage = null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    MenuIcon(
+                                      label: "Kajian",
+                                      icon: Icons.menu_book,
+                                      backgroundColor: const Color(
+                                        0xFFFFEBEE,
+                                      ), // Red 50
+                                      iconColor: const Color(0xFFF44336), // Red
+                                      onTap: () => _navigateTo(
+                                        KajianPage(
+                                          onBack: () => setState(
+                                            () => _currentHomeSubPage = null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    MenuIcon(
+                                      label: "Lainnya",
+                                      icon: Icons.grid_view,
+                                      backgroundColor: const Color(
+                                        0xFFE3F2FD,
+                                      ), // Blue 50
+                                      iconColor: const Color(
+                                        0xFF2196F3,
+                                      ), // Blue
+                                      onTap: _showAllMenu,
+                                    ),
+                                  ],
+                                ),
+
+                              const SizedBox(height: 20), // Tighter
+                              // 2. Student Card (Floating)
+                              // Wrapped in Container to control height if needed
+                              if (_activeSantri != null)
+                                SantriCardCarousel(
+                                  santriList: _santriList,
+                                  activeSantri: _activeSantri!,
+                                  onSantriChanged: (santri) {
+                                    if (_activeSantri?.id != santri.id) {
+                                      setState(() => _activeSantri = santri);
+                                      _loadContent();
+                                    }
+                                  },
+                                  onSwitchTap: _showSantriSwitcher,
+                                )
+                              else
+                                const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20.0),
+                                    child: Text("Data Santri tidak tersedia"),
+                                  ),
+                                ),
+
+                              const SizedBox(height: 24),
+
+                              // 3. Transaction History (New)
+                              Row(
                                 children: [
-                                  MenuIcon(
-                                    label: "Rapor",
-                                    icon: Icons.school,
-                                    backgroundColor: const Color(
-                                      0xFFF3E5F5,
-                                    ), // Purple 50
-                                    iconColor: const Color(
-                                      0xFF9C27B0,
-                                    ), // Purple
+                                  const Icon(
+                                    Icons.receipt_long,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Riwayat Belanja",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  GestureDetector(
                                     onTap: () => _navigateTo(
-                                      StudentReportPage(
+                                      ShoppingHistoryPage(
                                         activeSantri: _activeSantri!,
                                         onBack: () => setState(
                                           () => _currentHomeSubPage = null,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  MenuIcon(
-                                    label: "Prestasi",
-                                    icon: Icons.emoji_events,
-                                    backgroundColor: const Color(
-                                      0xFFFFF3E0,
-                                    ), // Orange 50
-                                    iconColor: const Color(
-                                      0xFFFF9800,
-                                    ), // Orange
-                                    onTap: () => _navigateTo(
-                                      AchievementsPage(
-                                        activeSantri: _activeSantri!,
-                                        onBack: () => setState(
-                                          () => _currentHomeSubPage = null,
+                                    child: Text(
+                                      "Lihat Semua",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary.withOpacity(
+                                          0.8,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  MenuIcon(
-                                    label: "Kajian",
-                                    icon: Icons.menu_book,
-                                    backgroundColor: const Color(
-                                      0xFFFFEBEE,
-                                    ), // Red 50
-                                    iconColor: const Color(0xFFF44336), // Red
-                                    onTap: () => _navigateTo(
-                                      KajianPage(
-                                        onBack: () => setState(
-                                          () => _currentHomeSubPage = null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  MenuIcon(
-                                    label: "Lainnya",
-                                    icon: Icons.grid_view,
-                                    backgroundColor: const Color(
-                                      0xFFE3F2FD,
-                                    ), // Blue 50
-                                    iconColor: const Color(0xFF2196F3), // Blue
-                                    onTap: _showAllMenu,
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: 12),
+                              _buildTransactionList(),
 
-                            const SizedBox(height: 20), // Tighter
-                            // 2. Student Card (Floating)
-                            // Wrapped in Container to control height if needed
-                            if (_activeSantri != null)
-                              SantriCardCarousel(
-                                santriList: _santriList,
-                                activeSantri: _activeSantri!,
-                                onSantriChanged: (santri) {
-                                  if (_activeSantri?.id != santri.id) {
-                                    setState(() => _activeSantri = santri);
-                                    // _loadContent();
-                                  }
-                                },
-                                onSwitchTap: _showSantriSwitcher,
-                              )
-                            else
-                              const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: Text("Data Santri tidak tersedia"),
-                                ),
-                              ),
+                              const SizedBox(height: 24),
 
-                            const SizedBox(height: 24),
-
-                            // 3. Transaction History (New)
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.receipt_long,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  "Riwayat Belanja",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                              // 4. News Section (New)
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.newspaper,
+                                    color: AppColors.primary,
+                                    size: 20,
                                   ),
-                                ),
-                                const Spacer(),
-                                GestureDetector(
-                                  onTap: () => _navigateTo(
-                                    ShoppingHistoryPage(
-                                      activeSantri: _activeSantri!,
-                                      onBack: () => setState(
-                                        () => _currentHomeSubPage = null,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "Lihat Semua",
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Informasi Pesantren",
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.primary.withOpacity(0.8),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildTransactionList(),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildNewsSection(),
 
-                            const SizedBox(height: 24),
-
-                            // 4. News Section (New)
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.newspaper,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  "Informasi Pesantren",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildNewsSection(),
-
-                            const SizedBox(height: 100), // Bottom cushion
-                          ],
+                              const SizedBox(height: 100), // Bottom cushion
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -756,14 +792,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildTransactionList() {
-    if (_activeSantri == null ||
-        _isLoadingContent && _recentTransactions.isEmpty) {
+    if (_isLoadingContent) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
           child: CircularProgressIndicator(),
         ),
       );
+    }
+
+    if (_activeSantri == null) {
+      return const SizedBox(); // Or show a text like "No data"
     }
 
     if (_recentTransactions.isEmpty) {

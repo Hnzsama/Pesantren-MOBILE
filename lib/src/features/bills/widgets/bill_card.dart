@@ -7,8 +7,9 @@ import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
 class BillCard extends StatelessWidget {
   final StudentBill bill;
   final VoidCallback? onPay;
+  final VoidCallback? onPrint;
 
-  const BillCard({super.key, required this.bill, this.onPay});
+  const BillCard({super.key, required this.bill, this.onPay, this.onPrint});
 
   @override
   Widget build(BuildContext context) {
@@ -156,15 +157,71 @@ class BillCard extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   // Amount
-                  Text(
-                    bill.formattedAmount,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isCancelled ? Colors.grey : AppColors.textPrimary,
-                      fontFamily: 'Courier',
+                  // Amount Section
+                  if (isPaid) ...[
+                    const SizedBox(height: 4),
+                    _buildSummaryRow("Tagihan", bill.formattedAmount),
+                    if (bill.adminFee > 0)
+                      _buildSummaryRow(
+                        "Biaya Aplikasi",
+                        NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp ',
+                          decimalDigits: 0,
+                        ).format(bill.adminFee),
+                      ),
+                    if (bill.paymentFee > 0)
+                      _buildSummaryRow(
+                        "Biaya Layanan",
+                        NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp ',
+                          decimalDigits: 0,
+                        ).format(bill.paymentFee),
+                      ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      height: 1,
+                      color: Colors.grey.withOpacity(0.2),
                     ),
-                  ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Total",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'id_ID',
+                            symbol: 'Rp ',
+                            decimalDigits: 0,
+                          ).format(
+                            bill.amount + bill.adminFee + bill.paymentFee,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else
+                    Text(
+                      bill.formattedAmount,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isCancelled
+                            ? Colors.grey
+                            : AppColors.textPrimary,
+                        fontFamily: 'Courier',
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -238,9 +295,46 @@ class BillCard extends StatelessWidget {
                       ),
                     )
                   else if (bill.status == BillStatus.PAID)
-                    // Show Paid Date if relevant, or just checkmark
                     Row(
                       children: [
+                        if (onPrint != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: InkWell(
+                              onTap: onPrint,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.5),
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.print,
+                                      size: 14,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      "Struk",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         const Icon(
                           Icons.check_circle,
                           size: 16,
@@ -248,7 +342,7 @@ class BillCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          "Dibayar ${bill.paidAt != null ? DateFormat('d MMM').format(bill.paidAt!) : ''}",
+                          "Lunas",
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF065F46),
@@ -262,6 +356,29 @@ class BillCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }

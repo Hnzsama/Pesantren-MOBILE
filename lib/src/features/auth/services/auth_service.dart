@@ -19,6 +19,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'email': username, 'password': password}),
       );
@@ -65,6 +66,7 @@ class AuthService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -129,6 +131,7 @@ class AuthService {
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
           },
         );
       } catch (e) {

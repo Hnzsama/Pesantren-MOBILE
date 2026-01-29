@@ -51,6 +51,9 @@ class StudentBill {
   final DateTime? paidAt;
   final String? paymentMethod;
 
+  final int adminFee;
+  final int paymentFee;
+
   // Relations
   final BillCategory? category;
   final BillEvent? event;
@@ -66,6 +69,8 @@ class StudentBill {
     this.paymentMethod,
     this.category,
     this.event,
+    this.adminFee = 0,
+    this.paymentFee = 0,
   });
 
   factory StudentBill.fromJson(Map<String, dynamic> json) {
@@ -95,6 +100,10 @@ class StudentBill {
           ? BillCategory.fromJson(json['category'])
           : null,
       event: json['event'] != null ? BillEvent.fromJson(json['event']) : null,
+      adminFee: (double.tryParse(json['admin_fee']?.toString() ?? '0') ?? 0)
+          .toInt(),
+      paymentFee: (double.tryParse(json['payment_fee']?.toString() ?? '0') ?? 0)
+          .toInt(),
     );
   }
 

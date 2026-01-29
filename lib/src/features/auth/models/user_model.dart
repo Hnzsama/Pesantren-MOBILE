@@ -1,4 +1,5 @@
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/features/profile/models/school_model.dart';
 
 class UserModel {
   final String id;
@@ -20,7 +21,13 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+    // Parse global school data if present
+    SchoolModel? schoolData;
+    if (json['school'] != null) {
+      schoolData = SchoolModel.fromJson(json['school']);
+    }
+
+    final user = UserModel(
       id: json['id'].toString(),
       name: json['name'] ?? 'User',
       username: json['username'] ?? '',
@@ -36,6 +43,26 @@ class UserModel {
               .toList() ??
           [],
     );
+
+    // Inject school into students if available and not already set
+    if (schoolData != null && user.students.isNotEmpty) {
+      final updatedStudents = user.students.map((s) {
+        return s.school == null ? s.copyWith(school: schoolData) : s;
+      }).toList();
+
+      // Need to return a new UserModel or modify the list?
+      // UserModel fields are final. We should construct the list first.
+      return UserModel(
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        roles: user.roles,
+        students: updatedStudents,
+      );
+    }
+
+    return user;
   }
 
   Map<String, dynamic> toJson() {

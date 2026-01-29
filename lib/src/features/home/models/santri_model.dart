@@ -1,8 +1,10 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pesantren_mobile/src/features/profile/models/school_model.dart';
 
 class SantriModel {
   final String id;
   final String nama;
+  final String? nis; // Added NIS field
   final String kelas;
   final String? photoUrl;
   final double uangSaku;
@@ -14,10 +16,12 @@ class SantriModel {
   final String departmentCode; // e.g. "MA", "MTS"
   final double dailyCashLimit;
   final String? schoolId;
+  final SchoolModel? school;
 
   const SantriModel({
     required this.id,
     required this.nama,
+    this.nis,
     required this.kelas,
     this.photoUrl,
     required this.uangSaku,
@@ -28,6 +32,7 @@ class SantriModel {
     this.departmentCode = 'MTS',
     this.dailyCashLimit = 50000,
     this.schoolId,
+    this.school,
   });
   factory SantriModel.fromJson(Map<String, dynamic> json) {
     String deptCode = 'MTS';
@@ -62,6 +67,7 @@ class SantriModel {
           json['student_name'] ??
           json['full_name'] ??
           'Unknown',
+      nis: json['nis']?.toString(), // Map NIS
       kelas:
           json['class'] ?? json['kelas'] ?? json['level_id']?.toString() ?? '-',
       photoUrl: photoUrl,
@@ -95,6 +101,9 @@ class SantriModel {
           ) ??
           50000,
       schoolId: json['school_id']?.toString(),
+      school: json['school'] != null
+          ? SchoolModel.fromJson(json['school'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -102,6 +111,7 @@ class SantriModel {
     return {
       'id': id,
       'nama': nama,
+      'nis': nis,
       'kelas': kelas,
       'photo_url': photoUrl,
       'uang_saku': uangSaku,
@@ -110,6 +120,40 @@ class SantriModel {
       'department_code': departmentCode,
       'daily_cash_limit': dailyCashLimit,
     };
+  }
+
+  SantriModel copyWith({
+    String? id,
+    String? nama,
+    String? nis,
+    String? kelas,
+    String? photoUrl,
+    double? uangSaku,
+    String? kehadiranStatus,
+    double? kehadiranPercentage,
+    String? jenisKelamin,
+    String? walletPin,
+    String? departmentCode,
+    double? dailyCashLimit,
+    String? schoolId,
+    SchoolModel? school,
+  }) {
+    return SantriModel(
+      id: id ?? this.id,
+      nama: nama ?? this.nama,
+      nis: nis ?? this.nis,
+      kelas: kelas ?? this.kelas,
+      photoUrl: photoUrl ?? this.photoUrl,
+      uangSaku: uangSaku ?? this.uangSaku,
+      kehadiranStatus: kehadiranStatus ?? this.kehadiranStatus,
+      kehadiranPercentage: kehadiranPercentage ?? this.kehadiranPercentage,
+      jenisKelamin: jenisKelamin ?? this.jenisKelamin,
+      walletPin: walletPin ?? this.walletPin,
+      departmentCode: departmentCode ?? this.departmentCode,
+      dailyCashLimit: dailyCashLimit ?? this.dailyCashLimit,
+      schoolId: schoolId ?? this.schoolId,
+      school: school ?? this.school,
+    );
   }
 }
 

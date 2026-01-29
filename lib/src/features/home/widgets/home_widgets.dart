@@ -3,6 +3,7 @@ import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
 import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class SantriHeader extends StatefulWidget {
   final List<SantriModel> santriList;
@@ -192,11 +193,11 @@ class _SantriHeaderState extends State<SantriHeader> {
   }
 }
 
-class StudentIdCard extends StatelessWidget {
+class StudentIdCardLegacy extends StatelessWidget {
   final SantriModel santri;
   final VoidCallback onSwitchTap;
 
-  const StudentIdCard({
+  const StudentIdCardLegacy({
     super.key,
     required this.santri,
     required this.onSwitchTap,
@@ -227,8 +228,6 @@ class StudentIdCard extends StatelessWidget {
             stops: const [0.0, 0.45, 1.0],
           ),
           border: Border.all(color: Colors.white, width: 1.5),
-          // Removed Drop Shadow as requested ('hilangkan shadow')
-          // Volume comes from the internal gradient and border highlight
         ),
         child: Stack(
           children: [
@@ -350,7 +349,7 @@ class StudentIdCard extends StatelessWidget {
 
                   const Spacer(),
 
-                  // CARD NUMBER (Embossed look)
+                  // CARD NUMBER
                   Text(
                     "1000  4633  3308  8899",
                     style: TextStyle(
@@ -463,6 +462,381 @@ class StudentIdCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class StudentIdCard extends StatelessWidget {
+  final SantriModel santri;
+  final VoidCallback onSwitchTap;
+
+  const StudentIdCard({
+    super.key,
+    required this.santri,
+    required this.onSwitchTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // ISO/IEC 7810 ID-1 aspect ratio
+    return AspectRatio(
+      aspectRatio: 85.60 / 53.98,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // 1. Background Gradient
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFE8F5E9), // Green 50 (Very Light Mint)
+                      Color(0xFFB9F6CA), // Green Accent 100
+                    ],
+                  ),
+                ),
+              ),
+
+              // 2. Geometric Shapes (Curves)
+              CustomPaint(
+                size: Size.infinite,
+                painter: CardBackgroundPainter(),
+              ),
+
+              // 3. Content (Responsive)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final h = constraints.maxHeight;
+                  final w = constraints.maxWidth;
+
+                  // Scale factors
+                  final double padding =
+                      w * 0.035; // Reduced Padding (Requested)
+                  final double logoSize = h * 0.18; // Smaller Logo (Requested)
+                  final double rightLogoSize =
+                      logoSize; // Symmetric (Requested)
+
+                  final double headerSize = h * 0.09;
+                  final double subHeaderSize = h * 0.05;
+                  final double numSize = h * 0.08;
+                  final double qrSize = h * 0.25;
+
+                  final String nisDisplay = santri.nis ?? santri.id;
+
+                  // Theme Colors (Light Green Theme)
+                  const Color textDark = Color(0xFF1B5E20); // Green 900
+                  const Color textMuted = Color(0xFF2E7D32); // Green 800
+
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      padding,
+                      padding * 0.8,
+                      padding,
+                      padding,
+                    ), // Reduced top padding
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // ROW 1: Header (Left: Sandigi/App, Right: School/Dynamic)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment
+                              .center, // Ensure vertical center alignment
+                          children: [
+                            // LEFT: Logo + School Name (App/Provider)
+                            Row(
+                              children: [
+                                SizedBox(
+                                  height: logoSize,
+                                  width: logoSize, // Keep aspect ratio
+                                  child: Image.asset(
+                                    'assets/logo.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                SizedBox(width: w * 0.02),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min, // Compact
+                                  children: [
+                                    Text(
+                                      "PONDOK PESANTREN",
+                                      style: TextStyle(
+                                        color: textMuted,
+                                        fontSize: subHeaderSize * 0.7,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      "SANDIGI",
+                                      style: TextStyle(
+                                        color: textDark,
+                                        fontSize: subHeaderSize * 1.2,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+
+                            // RIGHT: Dynamic School Logo (from JSON)
+                            // If logoPath exists, show it. Otherwise fallback to BankSyariah style or similar.
+                            if (santri.school?.logoPath != null)
+                              Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "PONDOK PESANTREN",
+                                        style: TextStyle(
+                                          color: textMuted,
+                                          fontSize: subHeaderSize * 0.7,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Container(
+                                        constraints: BoxConstraints(
+                                          maxWidth: w * 0.35,
+                                        ), // Limit width to prevent overflow
+                                        child: Text(
+                                          santri.school?.name ?? "SEKOLAH",
+                                          style: TextStyle(
+                                            color: textDark,
+                                            fontSize: subHeaderSize * 1.2,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(width: w * 0.02),
+                                  Container(
+                                    height: rightLogoSize,
+                                    width: rightLogoSize,
+                                    alignment: Alignment.centerRight,
+                                    child: Image.network(
+                                      santri.school!.logoPath!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (ctx, _, __) => Icon(
+                                        Icons.broken_image,
+                                        color: textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              // Fallback (BankSyariah)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.account_balance,
+                                    color: textMuted,
+                                    size: rightLogoSize * 0.8,
+                                  ),
+                                  SizedBox(width: w * 0.01),
+                                  Text(
+                                    "BankSyariah",
+                                    style: TextStyle(
+                                      color: textMuted,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                      fontSize: rightLogoSize * 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+
+                        const Spacer(
+                          flex: 3,
+                        ), // Push Center Content Down slightly
+
+                        // ROW 2: "KARTU SANTRI" (Centered)
+                        Text(
+                          "KARTU SANTRI",
+                          style: TextStyle(
+                            color: textMuted.withOpacity(
+                              0.8,
+                            ), // Dark Muted Green
+                            fontSize:
+                                subHeaderSize *
+                                1.3, // Increased size (Requested)
+                            letterSpacing: 3.0,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+
+                        SizedBox(height: h * 0.01),
+
+                        // ROW 3: Card Number
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "1234  5678  9101  2345",
+                            style: TextStyle(
+                              fontFamily: 'Courier',
+                              fontSize:
+                                  numSize * 1.1, // Reduced size (Requested)
+                              color: textDark, // Dark Green
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.white.withOpacity(
+                                    0.5,
+                                  ), // Light shadow for depth
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(flex: 4), // Push Bottom Content Down
+                        // ROW 4: Bottom Info
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // QR Code (Dynamic)
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              color: Colors.white,
+                              width: qrSize,
+                              height: qrSize,
+                              child: Center(
+                                child: QrImageView(
+                                  data: nisDisplay,
+                                  version: QrVersions.auto,
+                                  size: qrSize * 0.9,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(width: w * 0.03),
+
+                            // Name and NIS (Bottom Left)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      santri.nama.toUpperCase(),
+                                      style: TextStyle(
+                                        color: textDark, // Updated to Dark Text
+                                        fontSize: subHeaderSize * 1.2,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    "NIS $nisDisplay",
+                                    style: TextStyle(
+                                      color: textMuted, // Updated to Muted Text
+                                      fontSize: subHeaderSize * 0.9,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Valid Thru (Bottom Right)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "Valid Thru",
+                                  style: TextStyle(
+                                    color: textMuted, // Updated to Muted Text
+                                    fontSize: subHeaderSize * 0.7,
+                                  ),
+                                ),
+                                Text(
+                                  "18/30",
+                                  style: TextStyle(
+                                    color: textDark, // Updated to Dark Text
+                                    fontSize: subHeaderSize * 1.2,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: h * 0.01),
+                                Icon(
+                                  Icons.flutter_dash,
+                                  color: Colors.redAccent.withOpacity(0.8),
+                                  size: headerSize,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        // Raise elements slightly from bottom
+                        SizedBox(height: h * 0.02),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Custom Painter for the background curves
+class CardBackgroundPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+          .withOpacity(0.3) // Subtle white overlay
+      ..style = PaintingStyle.fill;
+
+    // 1. Top Right Large Circle/Oval
+    canvas.drawCircle(
+      Offset(size.width * 0.9, size.height * 0.1),
+      size.width * 0.5,
+      paint,
+    );
+
+    // 2. Bottom Left Large Circle/Oval
+    canvas.drawCircle(
+      Offset(size.width * 0.1, size.height * 0.9),
+      size.width * 0.45,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ... (existing imports)

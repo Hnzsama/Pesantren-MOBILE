@@ -5,6 +5,8 @@ import 'package:pesantren_mobile/src/features/bills/models/bill_model.dart';
 import 'package:pesantren_mobile/src/features/bills/service/bill_service.dart';
 import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/features/transactions/models/transaction_model.dart';
+import 'package:pesantren_mobile/src/features/payment/pages/payment_success_page.dart';
 
 /// Page for displaying paid bill history.
 /// Filters only bills with BillStatus.PAID.
@@ -138,30 +140,35 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Riwayat Pembayaran",
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.7,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Riwayat Pembayaran",
+                                              style: TextStyle(
+                                                color: Colors.white.withOpacity(
+                                                  0.7,
+                                                ),
+                                                fontSize: 14,
                                               ),
-                                              fontSize: 14,
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            widget.activeSantri.nama,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              widget.activeSantri.nama,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
+                                      const SizedBox(width: 16),
                                       CircleAvatar(
                                         backgroundColor: Colors.white
                                             .withOpacity(0.2),
@@ -326,11 +333,42 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage>
       itemBuilder: (context, index) {
         return BillCard(
           bill: bills[index],
-          onPay: () {
-            // No Action for History
-          },
+          onPay: () {},
+          onPrint: () => _handlePrint(bills[index]),
         );
       },
+    );
+  }
+
+  void _handlePrint(StudentBill bill) {
+    // Map StudentBill to TransactionModel
+    final transaction = TransactionModel(
+      id: bill.id,
+      invoiceCode: '',
+      studentId: bill.studentId,
+      type: 'DEBIT',
+      category: bill.isEventBill ? 'EVENT' : 'BILL',
+      amount: bill.amount,
+      description: bill.isEventBill
+          ? (bill.event?.title ?? 'Event')
+          : (bill.category?.name ?? 'Tagihan'),
+      paymentMethod: bill.paymentMethod ?? 'MANUAL',
+      status: 'PAID',
+      createdAt: bill.paidAt ?? DateTime.now(),
+      adminFee: bill.adminFee,
+      paymentFee: bill.paymentFee,
+      eventName: bill.event?.title,
+      eventDate: bill.event?.eventDate,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentSuccessPage(
+          transaction: transaction,
+          studentName: widget.activeSantri.nama,
+        ),
+      ),
     );
   }
 }

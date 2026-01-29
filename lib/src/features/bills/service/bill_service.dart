@@ -28,6 +28,7 @@ class BillService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -44,6 +45,78 @@ class BillService {
     } catch (e) {
       debugPrint('Error fetching bills: $e');
       rethrow;
+    }
+  }
+
+  /// Fetches bill detail by ID
+  Future<StudentBill> getBillDetail(String id) async {
+    final token = await _authService.getToken();
+    if (token == null) throw Exception('No token');
+
+    final baseUrl = dotenv.env['APP_URL'] ?? "";
+    final url = Uri.parse('$baseUrl/bills/$id');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return StudentBill.fromJson(data);
+    } else {
+      throw Exception('Failed to load bill detail');
+    }
+  }
+
+  /// Initiates payment for a bill
+  /// Returns Map with snap_token, order_id, bill_id
+  Future<Map<String, dynamic>> payBill(
+    String billId, {
+    String? paymentType,
+    int? adminFee,
+    int? paymentFee,
+    String? studentId,
+  }) async {
+    final token = await _authService.getToken();
+    if (token == null) throw Exception('No token');
+
+    final baseUrl = dotenv.env['APP_URL'] ?? "";
+    final uri = Uri.parse('$baseUrl/bills/$billId/pay');
+
+    debugPrint(
+      'Initiating bill payment: $billId, Type: $paymentType, AdminFee: $adminFee, PaymentFee: $paymentFee',
+    );
+
+    final body = <String, dynamic>{};
+    if (paymentType != null) body['payment_type'] = paymentType;
+    if (adminFee != null) body['admin_fee'] = adminFee;
+    if (paymentFee != null) body['payment_fee'] = paymentFee;
+    if (studentId != null) body['student_id'] = studentId;
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: jsonEncode(body),
+    );
+
+    debugPrint('Pay Bill Response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Payment initiation failed');
     }
   }
 }

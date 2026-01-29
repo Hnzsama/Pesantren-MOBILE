@@ -19,6 +19,12 @@ dependencies:
   flutter_dotenv: ^6.0.0
   shared_preferences: ^2.5.4
   cached_network_image: ^3.4.1
+  qr_flutter: ^4.1.0
+  pdf: ^3.10.4
+  printing: ^5.11.1
+  share_plus: ^7.2.1
+  path_provider: ^2.1.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
