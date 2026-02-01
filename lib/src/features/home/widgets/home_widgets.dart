@@ -501,10 +501,7 @@ class StudentIdCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFE8F5E9), // Green 50 (Very Light Mint)
-                      Color(0xFFB9F6CA), // Green Accent 100
-                    ],
+                    colors: [AppColors.primary, AppColors.primaryDark],
                   ),
                 ),
               ),
@@ -535,9 +532,9 @@ class StudentIdCard extends StatelessWidget {
 
                   final String nisDisplay = santri.nis ?? santri.id;
 
-                  // Theme Colors (Light Green Theme)
-                  const Color textDark = Color(0xFF1B5E20); // Green 900
-                  const Color textMuted = Color(0xFF2E7D32); // Green 800
+                  // Theme Colors (Dark Teal Theme)
+                  const Color textDark = Colors.white; // White for dark bg
+                  const Color textMuted = Colors.white70; // White 70%
 
                   return Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -672,7 +669,6 @@ class StudentIdCard extends StatelessWidget {
                         const Spacer(
                           flex: 3,
                         ), // Push Center Content Down slightly
-
                         // ROW 2: "KARTU SANTRI" (Centered)
                         Text(
                           "KARTU SANTRI",
