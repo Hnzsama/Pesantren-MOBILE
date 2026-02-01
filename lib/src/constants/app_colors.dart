@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Green Palette (Deep Islamic Green)
-  static const Color primary = Color(0xFF006400); // Dark Green
-  static const Color primaryDark = Color(0xFF004D00);
+  // Primary Teal Palette (Updated)
+  static const Color primary = Color(0xFF007474); // Teal
+  static const Color primaryDark = Color(0xFF005252);
   static const Color primaryLight = Color(
-    0xFF32CD32,
-  ); // Lighter green for accents
+    0xFF4D9E9E,
+  ); // Lighter teal for accents
 
   // Accent Gold Palette
   static const Color accent = Color(0xFFFFD700); // Gold
