@@ -464,7 +464,7 @@ class _HomePageState extends State<HomePage> {
               end: Alignment.bottomCenter,
               colors: [
                 AppColors.primaryDark,
-                Color(0xFF003300), // Slightly darker green
+                Color(0xFF003333), // Darker Teal
               ],
             ),
           ),
@@ -704,7 +704,7 @@ class _HomePageState extends State<HomePage> {
 
                               const SizedBox(height: 24),
 
-                              // 3. Transaction History (New)
+                              // 3. Transaction History
                               Row(
                                 children: [
                                   const Icon(
@@ -749,7 +749,7 @@ class _HomePageState extends State<HomePage> {
 
                               const SizedBox(height: 24),
 
-                              // 4. News Section (New)
+                              // 4. News Section
                               Row(
                                 children: [
                                   const Icon(
@@ -820,7 +820,7 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: transactionsToShow.map((tx) {
         final isExpense = tx.isExpense;
-        final color = isExpense ? Colors.orange : Colors.green;
+        final color = isExpense ? AppColors.error : AppColors.primary;
         final icon = isExpense
             ? Icons.shopping_bag_outlined
             : Icons.account_balance_wallet_outlined;
@@ -885,9 +885,7 @@ class _HomePageState extends State<HomePage> {
               Text(
                 "${isExpense ? '-' : '+'} ${tx.formattedAmount}",
                 style: TextStyle(
-                  color: isExpense
-                      ? const Color(0xFFFF5252) // Softer Red
-                      : const Color(0xFF43A047), // Natural Green
+                  color: color,
                   fontWeight: FontWeight.w800,
                   fontSize: 14, // Slightly smaller to fit
                   letterSpacing: 0.5,
@@ -918,103 +916,107 @@ class _HomePageState extends State<HomePage> {
       },
     ];
 
-    return SizedBox(
-      height: 120, // Reduced height
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        itemCount: news.length,
-        separatorBuilder: (c, i) => const SizedBox(width: 16),
-        itemBuilder: (context, index) {
-          final item = news[index];
-          final color = item['color'] as Color;
+    // VERTICAL LAYOUT (Column)
+    // Removed fixed height constraint
+    return Column(
+      children: news.map((item) {
+        final color = item['color'] as Color;
+        return GlassContainer(
+          margin: const EdgeInsets.only(bottom: 16), // Add bottom spacing
+          width: double.infinity, // Full width
+          padding: const EdgeInsets.all(16), // Increased padding
+          borderRadius: BorderRadius.circular(24),
+          opacity: 0.8,
+          shadows: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+          child: Row(
+            children: [
+              // Gradient Icon Container
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.1), color.withOpacity(0.25)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Icon(item['icon'] as IconData, color: color, size: 32),
+              ),
+              const SizedBox(width: 16),
 
-          return GlassContainer(
-            width: 280,
-            padding: const EdgeInsets.all(12),
-            borderRadius: BorderRadius.circular(24),
-            opacity: 0.8,
-            shadows: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "PENGUMUMAN",
+                        style: TextStyle(
+                          fontSize: 10, // Slightly bigger
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['title'] as String,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15, // Slightly bigger
+                        height: 1.2,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item['desc']
+                          as String, // Added description for vertical layout
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['date'] as String,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
-            child: Row(
-              children: [
-                // Gradient Icon Container
-                Container(
-                  width: 60, // Reduced size
-                  height: 60, // Reduced size
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    gradient: LinearGradient(
-                      colors: [color.withOpacity(0.1), color.withOpacity(0.25)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Icon(item['icon'] as IconData, color: color, size: 32),
-                ),
-                const SizedBox(width: 16),
-
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "PENGUMUMAN",
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        item['title'] as String,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          height: 1.2,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item['date'] as String,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

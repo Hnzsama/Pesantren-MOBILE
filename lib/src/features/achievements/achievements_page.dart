@@ -72,7 +72,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                   headerSliverBuilder: (context, innerBoxIsScrolled) {
                     return [
                       SliverAppBar(
-                        expandedHeight: 230, // Reduced from 280
+                        expandedHeight: 220, // Reduced from 230
                         pinned: true,
                         backgroundColor: AppColors.primary,
                         elevation: 0,
@@ -124,7 +124,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                                               widget.activeSantri.nama,
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 22, // Increased
+                                                fontSize: 20, // Reduced from 22
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -154,7 +154,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                                     Text(
                                       "${data.length} Prestasi",
                                       style: const TextStyle(
-                                        fontSize: 24, // Reduced from 30
+                                        fontSize: 22, // Reduced from 24
                                         fontWeight: FontWeight.w800,
                                         color: Colors.white,
                                         letterSpacing: -1.0,

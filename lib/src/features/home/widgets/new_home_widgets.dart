@@ -84,10 +84,10 @@ class _BalanceSectionState extends State<BalanceSection> {
                     ? "Rp ••••••••"
                     : "Rp ${widget.balance.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}",
                 style: const TextStyle(
-                  fontSize: 36, // Increased size
+                  fontSize: 28, // Reduced size
                   fontWeight: FontWeight.w800, // Extra bold
                   color: Colors.white,
-                  letterSpacing: -1.0, // Tighter spacing
+                  letterSpacing: -0.5, // Tighter spacing
                   shadows: [
                     Shadow(
                       color: Colors.black26,

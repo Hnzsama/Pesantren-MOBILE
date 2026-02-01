@@ -14,6 +14,7 @@ class SantriModel {
   final String jenisKelamin; // "Laki-laki" or "Perempuan"
   final String? walletPin;
   final String departmentCode; // e.g. "MA", "MTS"
+  final String? departmentName; // e.g. "Madrasah Ibtidaiyah"
   final double dailyCashLimit;
   final String? schoolId;
   final SchoolModel? school;
@@ -30,26 +31,55 @@ class SantriModel {
     this.jenisKelamin = 'Laki-laki',
     this.walletPin,
     this.departmentCode = 'MTS',
+    this.departmentName,
     this.dailyCashLimit = 50000,
     this.schoolId,
     this.school,
   });
+
   factory SantriModel.fromJson(Map<String, dynamic> json) {
     String deptCode = 'MTS';
-    if (json['departments'] != null && json['departments'] is Map) {
-      deptCode = json['departments']['code']?.toString() ?? 'MTS';
-    } else if (json['department'] != null && json['department'] is Map) {
-      deptCode = json['department']['code']?.toString() ?? 'MTS';
-    } else if (json['department_code'] != null) {
-      deptCode = json['department_code'].toString();
+    String? deptName;
+    String className = '-';
+
+    // Parse Level & Department from nested objects if available
+    // Check top-level 'level' object first (most reliable source based on sample JSON)
+    if (json['level'] != null && json['level'] is Map) {
+      final level = json['level'];
+      // Use 'name' (e.g. "Kelas 6") or 'alias' (e.g. "MI 6")
+      className = level['name'] ?? level['alias'] ?? '-';
+
+      if (level['department'] != null && level['department'] is Map) {
+        final dept = level['department'];
+        deptCode = dept['code']?.toString() ?? 'MTS';
+        deptName = dept['name']?.toString();
+      }
+    } else {
+      // Fallback or multiple levels array handling (if applicable)
+      if (className == '-') {
+        className =
+            json['class'] ??
+            json['kelas'] ??
+            json['level_id']?.toString() ??
+            '-';
+      }
+    }
+
+    // Fallback for department code
+    if (deptCode == 'MTS') {
+      if (json['departments'] != null && json['departments'] is Map) {
+        deptCode = json['departments']['code']?.toString() ?? 'MTS';
+      } else if (json['department'] != null && json['department'] is Map) {
+        deptCode = json['department']['code']?.toString() ?? 'MTS';
+      } else if (json['department_code'] != null) {
+        deptCode = json['department_code'].toString();
+      }
     }
 
     String? photoUrl = json['photo_url'];
     if (photoUrl != null && !photoUrl.startsWith('http')) {
       final baseUrl = dotenv.env['IMG_URL'] ?? '';
       if (baseUrl.isNotEmpty) {
-        // Remove leading slash if both have it, or ensure one slash
-        // Simple append for now assuming standard paths
         if (photoUrl.startsWith('/')) {
           photoUrl = '$baseUrl$photoUrl';
         } else {
@@ -67,9 +97,8 @@ class SantriModel {
           json['student_name'] ??
           json['full_name'] ??
           'Unknown',
-      nis: json['nis']?.toString(), // Map NIS
-      kelas:
-          json['class'] ?? json['kelas'] ?? json['level_id']?.toString() ?? '-',
+      nis: json['nis']?.toString(),
+      kelas: className,
       photoUrl: photoUrl,
       uangSaku:
           double.tryParse(
@@ -82,8 +111,7 @@ class SantriModel {
                 '0',
           ) ??
           0.0,
-      kehadiranStatus:
-          'Hadir', // This might need to be fetched separately or included in student object
+      kehadiranStatus: 'Hadir',
       kehadiranPercentage: 0.0,
       jenisKelamin:
           json['gender'] == 'P' ||
@@ -93,6 +121,7 @@ class SantriModel {
           : 'Laki-laki',
       walletPin: json['wallet_pin'],
       departmentCode: deptCode,
+      departmentName: deptName,
       dailyCashLimit:
           double.tryParse(
             json['daily_limit']?.toString() ??
@@ -118,6 +147,7 @@ class SantriModel {
       'jenis_kelamin': jenisKelamin,
       'wallet_pin': walletPin,
       'department_code': departmentCode,
+      'department_name': departmentName,
       'daily_cash_limit': dailyCashLimit,
     };
   }
@@ -134,6 +164,7 @@ class SantriModel {
     String? jenisKelamin,
     String? walletPin,
     String? departmentCode,
+    String? departmentName,
     double? dailyCashLimit,
     String? schoolId,
     SchoolModel? school,
@@ -150,6 +181,7 @@ class SantriModel {
       jenisKelamin: jenisKelamin ?? this.jenisKelamin,
       walletPin: walletPin ?? this.walletPin,
       departmentCode: departmentCode ?? this.departmentCode,
+      departmentName: departmentName ?? this.departmentName,
       dailyCashLimit: dailyCashLimit ?? this.dailyCashLimit,
       schoolId: schoolId ?? this.schoolId,
       school: school ?? this.school,

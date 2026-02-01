@@ -179,7 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 widget.activeSantri.nama,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 24,
+                                  fontSize: 20, // Reduced from 24
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,
                                 ),
@@ -199,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                                 child: Text(
-                                  "${widget.activeSantri.kelas} • ${widget.activeSantri.id.padLeft(4, '0')}",
+                                  "${widget.activeSantri.kelas} • ${widget.activeSantri.departmentName ?? 'Pesantren'}",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,

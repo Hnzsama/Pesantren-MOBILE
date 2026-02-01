@@ -161,7 +161,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage>
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 22,
+                                                fontSize: 20, // Reduced from 22
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
