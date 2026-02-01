@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:intl/intl.dart';
 // GlassContainer import removed
 import 'package:pesantren_mobile/src/features/payment/services/transaction_service.dart';
 import 'package:pesantren_mobile/src/features/payment/services/payment_service.dart';
@@ -244,6 +245,15 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                       },
                     ),
                   ],
+                  centerTitle: true,
+                  title: const Text(
+                    "Isi Uang Saku",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
                       decoration: const BoxDecoration(
@@ -296,31 +306,29 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                 ),
                               ),
 
-                            // Premium Balance Card (Keep existing)
-                            // ... existing container code ...
+                            // Premium Balance Card
                             Container(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 24,
                               ),
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
+                                gradient: const LinearGradient(
                                   colors: [
-                                    Colors.white.withOpacity(0.15),
-                                    Colors.white.withOpacity(0.05),
+                                    Color(0xFF007474), // AppColors.primary
+                                    Color(0xFF004D4D), // Darker Teal
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
-                                ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    color: const Color(
+                                      0xFF007474,
+                                    ).withOpacity(0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
                                   ),
                                 ],
                               ),
@@ -337,23 +345,30 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    "Rp ${_activeSantri.uangSaku.toInt()}",
+                                    NumberFormat.currency(
+                                      locale: 'id_ID',
+                                      symbol: 'Rp ',
+                                      decimalDigits: 0,
+                                    ).format(_activeSantri.uangSaku),
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 36,
+                                      fontSize: 32,
                                       fontWeight: FontWeight.w800,
-                                      letterSpacing: 1,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 16),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
+                                      color: Colors.white.withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.2),
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -372,7 +387,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                           child: _activeSantri.photoUrl == null
                                               ? const Icon(
                                                   Icons.person,
-                                                  size: 12,
+                                                  size: 14,
                                                   color: AppColors.primary,
                                                 )
                                               : null,
@@ -382,8 +397,8 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                           "${_activeSantri.nama} • ${_activeSantri.kelas}",
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -394,15 +409,6 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    centerTitle: true,
-                    title: const Text(
-                      "Isi Uang Saku",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -444,15 +450,42 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                               ),
                               const SizedBox(height: 24),
 
-                              _buildSectionTitle("Atau Masukkan Manual"),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(color: Colors.grey.shade300),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: Text(
+                                      "ATAU MASUKKAN MANUAL",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade500,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Divider(color: Colors.grey.shade300),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: Colors.black.withOpacity(0.02),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -461,17 +494,18 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                 child: TextField(
                                   controller: _customAmountController,
                                   keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center, // Centered
                                   style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary,
                                   ),
                                   decoration: InputDecoration(
                                     prefixText: "Rp ",
                                     prefixStyle: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.grey,
                                     ),
                                     hintText: "0",
                                     hintStyle: TextStyle(
@@ -480,7 +514,7 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                                     border: InputBorder.none,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 24,
-                                      vertical: 18,
+                                      vertical: 20,
                                     ),
                                   ),
                                 ),
@@ -658,15 +692,15 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
           _customAmountController.clear();
         });
       },
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(30), // Pill shape
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade200,
-            width: isSelected ? 0 : 1,
+            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            width: 1.5,
           ),
           boxShadow: isSelected
               ? [
@@ -679,19 +713,23 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
               : [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
+                    blurRadius: 2,
                     offset: const Offset(0, 2),
                   ),
                 ],
         ),
-        child: Center(
-          child: Text(
-            "${(amount / 1000).toInt()}k",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : AppColors.textPrimary,
-            ),
+        alignment: Alignment.center,
+        child: Text(
+          NumberFormat.compactCurrency(
+            locale: 'id_ID',
+            symbol: '',
+            decimalDigits: 0,
+          ).format(amount),
+          // "${(amount / 1000).toInt()}k", // Previous format
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
           ),
         ),
       ),
@@ -930,31 +968,31 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isSelected
+                ? AppColors.primary.withOpacity(0.05)
+                : Colors.white, // Tinted background
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 2,
+              color: isSelected ? AppColors.primary : Colors.grey.shade200,
+              width: isSelected ? 2 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 50, // Fixed width container
+                height: 50,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _getChannelColor(channel.code).withOpacity(0.1),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade100),
                 ),
                 child: Icon(
                   _getChannelIcon(channel.code),
                   color: _getChannelColor(channel.code),
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 16),
@@ -964,12 +1002,15 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
                   children: [
                     Text(
                       channel.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600, // Reduced weight slightly
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                       ),
                     ),
+                    // Optional: Fee info could go here
                   ],
                 ),
               ),

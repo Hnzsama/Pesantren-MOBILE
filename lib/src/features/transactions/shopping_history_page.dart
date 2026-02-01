@@ -66,7 +66,7 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  expandedHeight: 190,
+                  expandedHeight: 180,
                   pinned: true,
                   backgroundColor: AppColors.primary,
                   elevation: 0,
@@ -100,29 +100,35 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Riwayat Transaksi",
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 14,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Riwayat Transaksi",
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.7,
+                                            ),
+                                            fontSize: 12,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.activeSantri.nama,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          widget.activeSantri.nama,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
+                                  const SizedBox(width: 12),
                                   CircleAvatar(
                                     backgroundColor: Colors.white.withOpacity(
                                       0.2,
@@ -224,8 +230,8 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: isExpense
-                                  ? const Color(0xFFFFEBEE)
-                                  : const Color(0xFFE8F5E9),
+                                  ? AppColors.error.withOpacity(0.1)
+                                  : AppColors.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(
@@ -233,8 +239,8 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
                                   ? Icons.shopping_bag_outlined
                                   : Icons.account_balance_wallet_outlined,
                               color: isExpense
-                                  ? const Color(0xFFF44336)
-                                  : const Color(0xFF4CAF50),
+                                  ? AppColors.error
+                                  : AppColors.primary,
                             ),
                           ),
                           title: Column(
@@ -279,8 +285,8 @@ class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
                               fontSize: 14, // Slightly smaller to fit
                               fontWeight: FontWeight.bold,
                               color: isExpense
-                                  ? const Color(0xFFF44336)
-                                  : const Color(0xFF4CAF50),
+                                  ? AppColors.error
+                                  : AppColors.primary,
                             ),
                           ),
                         ),

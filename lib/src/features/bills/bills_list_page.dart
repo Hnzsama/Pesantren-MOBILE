@@ -115,8 +115,7 @@ class _BillsListPageState extends State<BillsListPage>
                 headerSliverBuilder: (context, innerBoxIsScrolled) {
                   return [
                     SliverAppBar(
-                      expandedHeight:
-                          280, // Reduced from 300 to tighten spacing
+                      expandedHeight: 260, // Reduced from 280
                       pinned: true,
                       backgroundColor: AppColors.primary,
                       elevation: 0,
@@ -180,7 +179,7 @@ class _BillsListPageState extends State<BillsListPage>
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 22,
+                                                fontSize: 20, // Reduced from 22
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -218,7 +217,7 @@ class _BillsListPageState extends State<BillsListPage>
                                           'Rp ',
                                         ), // Formatting tweak if needed
                                     style: const TextStyle(
-                                      fontSize: 30, // Reduced from 36
+                                      fontSize: 28, // Reduced from 30
                                       fontWeight: FontWeight.w800, // Extra bold
                                       color: Colors.white,
                                       letterSpacing: -1.0, // Tighter spacing
@@ -332,6 +331,42 @@ class _BillsListPageState extends State<BillsListPage>
                     color: Color(0xFF065F46),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: 200,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (widget.onViewHistory != null) {
+                        widget.onViewHistory!();
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PaymentHistoryPage(
+                              activeSantri: widget.activeSantri,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text(
+                      "Riwayat Tagihan",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],

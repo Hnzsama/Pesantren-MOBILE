@@ -556,7 +556,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                                             color: Colors.white.withOpacity(
                                               0.7,
                                             ),
-                                            fontSize: 14,
+                                            fontSize: 12,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -564,14 +564,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                                           widget.santri.nama,
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 22,
+                                            fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                           ),
                                           overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
                                         ),
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 12),
                                   CircleAvatar(
                                     backgroundColor: Colors.white.withOpacity(
                                       0.2,
@@ -806,7 +808,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                                   ? 'Isi Uang Saku'
                                   : 'Pembayaran Tagihan',
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -871,7 +873,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                             Text(
                               trx.formattedTotalAmount,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: trx.category == 'TOPUP'
                                     ? Colors.blue
@@ -884,7 +886,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                         Text(
                           trx.formattedTotalAmount,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: trx.category == 'TOPUP'
                                 ? Colors.blue
