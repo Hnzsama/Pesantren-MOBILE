@@ -60,6 +60,7 @@ class TransactionService {
         'amount': amount.toString(),
         'student_id': studentId,
         'payment_type': paymentType,
+        'payment_method': 'payment_gateway', // Enforce new enum
       };
 
       if (adminFee != null) {
