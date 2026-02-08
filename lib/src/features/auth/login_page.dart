@@ -3,6 +3,7 @@ import 'package:pesantren_mobile/src/constants/app_colors.dart';
 
 import 'package:pesantren_mobile/src/features/home/home_page.dart';
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,32 +27,40 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      final success = await _authService.login(
-        _usernameController.text,
-        _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login Berhasil!'),
-            backgroundColor: AppColors.primary,
-          ),
+      try {
+        final success = await _authService.login(
+          _usernameController.text,
+          _passwordController.text,
         );
-        // Navigate to Home
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      } else {
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login Berhasil!'),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+          // Navigate to Home
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Username atau Password salah.'),
+          SnackBar(
+            content: Text(ErrorHandler.getErrorMessage(e)),
             backgroundColor: AppColors.error,
           ),
         );

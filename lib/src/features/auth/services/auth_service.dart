@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pesantren_mobile/src/features/auth/models/user_model.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
@@ -34,11 +35,18 @@ class AuthService {
           await getUser(); // Fetch and save user details
           return true;
         }
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
       return false;
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Login error: $e');
-      return false;
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 
@@ -70,7 +78,7 @@ class AuthService {
         },
       );
 
-      debugPrint('Get User Response: ${response.body}');
+      debugPrint('Get User Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -87,9 +95,17 @@ class AuthService {
           await _saveUser(user);
           return user;
         }
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Get User error: $e');
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
     return null;
   }
