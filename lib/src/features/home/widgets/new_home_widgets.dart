@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/features/home/models/student_card_model.dart';
 import 'package:pesantren_mobile/src/features/home/widgets/home_widgets.dart';
 
 class HomeGreeting extends StatelessWidget {
@@ -15,23 +16,27 @@ class HomeGreeting extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Assalamualaikum,",
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                parentName,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Assalamualaikum,",
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  parentName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
           ),
           Container(
             padding: const EdgeInsets.all(2),
@@ -135,6 +140,7 @@ class _BalanceSectionState extends State<BalanceSection> {
 class SantriCardCarousel extends StatefulWidget {
   final List<SantriModel> santriList;
   final SantriModel activeSantri;
+  final Map<String, StudentCardModel> studentCards; // Added
   final ValueChanged<SantriModel> onSantriChanged;
   final VoidCallback onSwitchTap;
 
@@ -142,6 +148,7 @@ class SantriCardCarousel extends StatefulWidget {
     super.key,
     required this.santriList,
     required this.activeSantri,
+    this.studentCards = const {}, // Added default empty
     required this.onSantriChanged,
     required this.onSwitchTap,
   });
@@ -227,6 +234,7 @@ class _SantriCardCarouselState extends State<SantriCardCarousel> {
                     ), // Removed inner padding for better alignment
                     child: StudentIdCard(
                       santri: widget.santriList[index],
+                      card: widget.studentCards[widget.santriList[index].id],
                       onSwitchTap: widget.onSwitchTap,
                     ),
                   ),

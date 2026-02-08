@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pesantren_mobile/src/constants/app_colors.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/features/home/models/student_card_model.dart';
 import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
 import 'package:pesantren_mobile/src/shared/widgets/glass_container.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -466,18 +467,23 @@ class StudentIdCardLegacy extends StatelessWidget {
 
 class StudentIdCard extends StatelessWidget {
   final SantriModel santri;
+  final StudentCardModel? card; // Added
   final VoidCallback onSwitchTap;
 
   const StudentIdCard({
     super.key,
     required this.santri,
+    this.card, // Added
     required this.onSwitchTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Determine if card is active (printed)
+    final bool isPrinted = card?.status == 'printed';
+
     // ISO/IEC 7810 ID-1 aspect ratio
-    return AspectRatio(
+    Widget cardContent = AspectRatio(
       aspectRatio: 85.60 / 53.98,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -690,7 +696,7 @@ class StudentIdCard extends StatelessWidget {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            "1234  5678  9101  2345",
+                            card?.cardNumber ?? "XXXX  XXXX  XXXX  XXXX",
                             style: TextStyle(
                               fontFamily: 'Courier',
                               fontSize:
@@ -723,7 +729,7 @@ class StudentIdCard extends StatelessWidget {
                               height: qrSize,
                               child: Center(
                                 child: QrImageView(
-                                  data: nisDisplay,
+                                  data: card?.cardNumber ?? nisDisplay,
                                   version: QrVersions.auto,
                                   size: qrSize * 0.9,
                                   padding: EdgeInsets.zero,
@@ -799,11 +805,50 @@ class StudentIdCard extends StatelessWidget {
                   );
                 },
               ),
+
+              // Status Overlay for non-printed cards
+              if (!isPrinted)
+                Container(
+                  color: Colors.black.withOpacity(0.1),
+                  alignment: Alignment.center,
+                ),
             ],
           ),
         ),
       ),
     );
+
+    if (!isPrinted) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(
+          [
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ], // Grayscale filter
+        ),
+        child: Opacity(opacity: 0.8, child: cardContent),
+      );
+    }
+
+    return cardContent;
   }
 }
 
