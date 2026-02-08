@@ -7,6 +7,7 @@ import 'package:pesantren_mobile/src/features/bills/widgets/bill_card.dart';
 import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/bills/bill_detail_page.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 /// Page for displaying unpaid bills (General and Event).
 /// Uses a custom SliverAppBar to match the Home design.
@@ -88,7 +89,32 @@ class _BillsListPageState extends State<BillsListPage>
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(child: Text("Error: ${snapshot.error}"));
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          ErrorHandler.getErrorMessage(snapshot.error),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _loadBills,
+                          child: const Text("Coba Lagi"),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               }
 
               final allBills = snapshot.data ?? [];
