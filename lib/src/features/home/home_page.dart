@@ -26,6 +26,7 @@ import 'package:pesantren_mobile/src/features/home/models/student_card_model.dar
 import 'package:pesantren_mobile/src/features/news/widgets/news_home_widget.dart';
 import 'package:pesantren_mobile/src/features/news/pages/news_list_page.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
+import 'package:pesantren_mobile/src/shared/services/notification_service.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -66,6 +67,13 @@ class _HomePageState extends State<HomePage> {
       const Duration(seconds: 30),
       (_) => _pollWalletBalance(),
     );
+
+    // Listen to Notification Clicks
+    NotificationService.instance.payloadStream.listen((payload) {
+      if (payload != null) {
+        _handleNotificationPayload(payload);
+      }
+    });
   }
 
   @override
@@ -166,6 +174,29 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint("Polling error: $e");
+    }
+  }
+
+  void _handleNotificationPayload(String payload) {
+    debugPrint("Handling payload: $payload");
+    // Simple check for now. You might want to parse JSON if payload is a JSON string.
+    // Example payload from backend: {"type": "kajian", "id": "123"}
+
+    bool isKajian = false;
+    if (payload.contains("kajian") || payload.contains("Kajian")) {
+      isKajian = true;
+    }
+
+    if (isKajian) {
+      if (context.mounted) {
+        // If we are in a sub-page, pop it first? Or just replace?
+        // Let's just set the sub-page.
+        setState(() {
+          _currentHomeSubPage = KajianPage(
+            onBack: () => setState(() => _currentHomeSubPage = null),
+          );
+        });
+      }
     }
   }
 

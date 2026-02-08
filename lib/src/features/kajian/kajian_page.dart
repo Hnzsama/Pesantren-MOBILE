@@ -146,6 +146,19 @@ class _KajianPageState extends State<KajianPage> {
                             }
                           },
                         ),
+                        actions: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _videosFuture = _service.getVideos();
+                              });
+                            },
+                          ),
+                        ],
                         title: const Text(
                           "Video Kajian",
                           style: TextStyle(

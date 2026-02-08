@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "656177869620",
+    "project_id": "pesantren-2dc32",
+    "storage_bucket": "pesantren-2dc32.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656177869620:android:b0d1beda7ff2858af22b61",
+        "android_client_info": {
+          "package_name": "com.android.sandigi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABINZgMPQN78SIl3droZvJqvRe9hUTJQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

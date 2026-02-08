@@ -375,6 +375,12 @@ class _StudentReportPageState extends State<StudentReportPage> {
                       }
                     },
                   ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: _loadFilters,
+                    ),
+                  ],
                   title: const Text(
                     "Laporan Hasil Belajar",
                     style: TextStyle(

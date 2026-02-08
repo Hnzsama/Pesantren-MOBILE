@@ -8,7 +8,7 @@
 PRODUCT_NAME = pesantren_mobile
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.pesantrenMobile
+PRODUCT_BUNDLE_IDENTIFIER = com.android.sandigi
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.android. All rights reserved.

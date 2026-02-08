@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pesantren_mobile/src/features/auth/models/user_model.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
+import 'package:pesantren_mobile/src/shared/services/notification_service.dart';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
@@ -33,6 +34,11 @@ class AuthService {
         if (token != null) {
           await _saveToken(token);
           await getUser(); // Fetch and save user details
+
+          // Update FCM token on backend after login
+          final fcmToken = await NotificationService().getToken();
+          await NotificationService().updateTokenOnBackend(fcmToken);
+
           return true;
         }
       } else {
@@ -123,6 +129,13 @@ class AuthService {
 
     // We try to fetch the user. If we get a 401 or similar, the token is invalid.
     final user = await getUser();
+
+    if (user != null) {
+      // Update FCM token on backend after successful auth check
+      final fcmToken = await NotificationService().getToken();
+      NotificationService().updateTokenOnBackend(fcmToken);
+    }
+
     return user != null;
   }
 

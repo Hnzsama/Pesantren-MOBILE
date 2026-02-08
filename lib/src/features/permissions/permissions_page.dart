@@ -95,6 +95,12 @@ class _PermissionsPageState extends State<PermissionsPage>
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: widget.onBack ?? () => Navigator.pop(context),
                   ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: _loadPermissions,
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
                       decoration: const BoxDecoration(

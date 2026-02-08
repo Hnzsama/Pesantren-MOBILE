@@ -88,6 +88,12 @@ class _SowanPageState extends State<SowanPage>
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: widget.onBack ?? () => Navigator.pop(context),
                   ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: _loadSowanSchedules,
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
                       decoration: const BoxDecoration(
