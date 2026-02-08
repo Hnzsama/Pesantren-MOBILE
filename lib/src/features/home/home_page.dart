@@ -15,9 +15,17 @@ import 'package:pesantren_mobile/src/features/bills/payment_history_page.dart';
 import 'package:pesantren_mobile/src/features/transactions/shopping_history_page.dart';
 import 'package:pesantren_mobile/src/features/profile/profile_page.dart';
 import 'package:pesantren_mobile/src/features/permissions/permissions_page.dart';
+import 'package:pesantren_mobile/src/features/sowan/sowan_page.dart';
 import 'package:pesantren_mobile/src/features/wallet/wallet_topup_page.dart';
 import 'package:pesantren_mobile/src/features/transactions/models/transaction_model.dart';
 import 'package:pesantren_mobile/src/features/transactions/services/transaction_service.dart';
+import 'dart:async';
+import 'package:pesantren_mobile/src/features/home/services/student_card_service.dart';
+import 'package:pesantren_mobile/src/features/home/services/student_service.dart'; // Added StudentService
+import 'package:pesantren_mobile/src/features/home/models/student_card_model.dart';
+import 'package:pesantren_mobile/src/features/news/widgets/news_home_widget.dart';
+import 'package:pesantren_mobile/src/features/news/pages/news_list_page.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -37,6 +45,7 @@ class _HomePageState extends State<HomePage> {
   List<SantriModel> _santriList = [];
   UserModel? _user;
   List<TransactionModel> _recentTransactions = [];
+  Map<String, StudentCardModel> _studentCards = {};
   bool _isLoadingContent = false;
   int _navIndex = 0;
 
@@ -44,6 +53,7 @@ class _HomePageState extends State<HomePage> {
   bool _showPaymentHistory = false;
   Widget? _currentHomeSubPage;
   bool _isBottomNavVisible = true;
+  Timer? _walletPollingTimer; // Added timer
 
   @override
   void initState() {
@@ -51,40 +61,111 @@ class _HomePageState extends State<HomePage> {
     // Initialize with first mock data
     // _activeSantri = MockData.santriList.first;
     _loadContent(); // Simulate fetching content
+    // Start periodic polling
+    _walletPollingTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _pollWalletBalance(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _walletPollingTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadContent() async {
     setState(() => _isLoadingContent = true);
 
-    // Fetch User Data
-    final authService = AuthService();
-    final user = await authService.getUser();
+    try {
+      // Fetch User Data
+      final authService = AuthService();
+      final user = await authService.getUser();
 
-    // Fetch Transactions if active santri exists
-    List<TransactionModel> transactions = [];
-    if (user != null && user.students.isNotEmpty) {
-      final activeId = _activeSantri?.id ?? user.students.first.id;
-      final txService = TransactionService();
-      // Fetch latest 5 only (page 1)
-      transactions = await txService.getTransactions(studentId: activeId);
-    }
+      // Fetch Transactions if active santri exists
+      List<TransactionModel> transactions = [];
+      Map<String, StudentCardModel> cardsMap = {};
 
-    if (mounted) {
-      setState(() {
-        _user = user;
-        if (user != null && user.students.isNotEmpty) {
-          _santriList = user.students;
-          // Only set default active santri if not already set, or if current one is invalid
-          if (_activeSantri == null ||
-              !_santriList.any((s) => s.id == _activeSantri!.id)) {
-            _activeSantri = _santriList.first;
+      // Fetch Cards (Parallel safe, but simple await here)
+      final cardService = StudentCardService();
+      final cards = await cardService.getStudentCards();
+      for (var card in cards) {
+        cardsMap[card.studentId] = card;
+      }
+
+      if (user != null && user.students.isNotEmpty) {
+        final activeId = _activeSantri?.id ?? user.students.first.id;
+        final txService = TransactionService();
+        // Fetch latest 5 only (page 1)
+        transactions = await txService.getTransactions(studentId: activeId);
+      }
+
+      if (mounted) {
+        setState(() {
+          _user = user;
+          if (user != null && user.students.isNotEmpty) {
+            _santriList = user.students;
+            // If active santri is already set, find the updated version in the new list
+            if (_activeSantri != null) {
+              final updatedSantri = _santriList.firstWhere(
+                (s) => s.id == _activeSantri!.id,
+                orElse: () =>
+                    _activeSantri!, // Fallback to current if not found
+              );
+              _activeSantri = updatedSantri;
+            } else {
+              _activeSantri = _santriList.first;
+            }
+          } else {
+            _santriList = [];
           }
-        } else {
-          _santriList = [];
+          _studentCards = cardsMap;
+          _recentTransactions = transactions;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.getErrorMessage(e)),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingContent = false);
+      }
+    }
+  }
+
+  Future<void> _pollWalletBalance() async {
+    if (_activeSantri == null) return;
+
+    try {
+      final service = StudentService();
+      final newBalance = await service.getWalletBalance(_activeSantri!.id);
+
+      if (newBalance != null && mounted) {
+        // Only update if balance changed to avoid unnecessary rebuilds
+        if (newBalance != _activeSantri!.uangSaku) {
+          debugPrint("Updating wallet balance: $newBalance");
+          setState(() {
+            _activeSantri = _activeSantri!.copyWith(uangSaku: newBalance);
+
+            // Also update in _santriList to keep consistency
+            final index = _santriList.indexWhere(
+              (s) => s.id == _activeSantri!.id,
+            );
+            if (index != -1) {
+              _santriList[index] = _activeSantri!;
+            }
+          });
         }
-        _recentTransactions = transactions;
-        _isLoadingContent = false;
-      });
+      }
+    } catch (e) {
+      debugPrint("Polling error: $e");
     }
   }
 
@@ -270,6 +351,22 @@ class _HomePageState extends State<HomePage> {
                           },
                         ),
                         MenuIcon(
+                          label: "Sowan",
+                          icon: Icons.people_outline,
+                          backgroundColor: const Color(0xFFEFEBE9), // Brown 50
+                          iconColor: const Color(0xFF795548), // Brown
+                          onTap: () {
+                            Navigator.pop(context);
+                            _navigateTo(
+                              SowanPage(
+                                activeSantri: _activeSantri!,
+                                onBack: () =>
+                                    setState(() => _currentHomeSubPage = null),
+                              ),
+                            );
+                          },
+                        ),
+                        MenuIcon(
                           label: "Jadwal",
                           icon: Icons.calendar_today,
                           backgroundColor: const Color(0xFFE0F2F1),
@@ -325,9 +422,10 @@ class _HomePageState extends State<HomePage> {
                           iconColor: const Color(0xFF3F51B5),
                           onTap: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Menu Berita akan segera hadir"),
+                            _navigateTo(
+                              NewsListPage(
+                                onBack: () =>
+                                    setState(() => _currentHomeSubPage = null),
                               ),
                             );
                           },
@@ -686,6 +784,7 @@ class _HomePageState extends State<HomePage> {
                                 SantriCardCarousel(
                                   santriList: _santriList,
                                   activeSantri: _activeSantri!,
+                                  studentCards: _studentCards,
                                   onSantriChanged: (santri) {
                                     if (_activeSantri?.id != santri.id) {
                                       setState(() => _activeSantri = santri);
@@ -750,26 +849,7 @@ class _HomePageState extends State<HomePage> {
                               const SizedBox(height: 24),
 
                               // 4. News Section
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.newspaper,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    "Informasi Pesantren",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              _buildNewsSection(),
+                              const NewsHomeWidget(),
 
                               const SizedBox(height: 100), // Bottom cushion
                             ],
@@ -889,128 +969,6 @@ class _HomePageState extends State<HomePage> {
                   fontWeight: FontWeight.w800,
                   fontSize: 14, // Slightly smaller to fit
                   letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildNewsSection() {
-    final news = [
-      {
-        'title': 'Penerimaan Santri Baru 2026/2027',
-        'desc': 'Gelombang 1 telah dibuka. Segera daftarkan putra-putri Anda.',
-        'color': Colors.blue,
-        'icon': Icons.app_registration,
-        'date': '2 Hari lalu',
-      },
-      {
-        'title': 'Kajian Akbar Bulanan',
-        'desc': 'Bersama KH. Ahmad Dahlan di Masjid Utama.',
-        'color': Colors.green,
-        'icon': Icons.mosque,
-        'date': '5 Hari lalu',
-      },
-    ];
-
-    // VERTICAL LAYOUT (Column)
-    // Removed fixed height constraint
-    return Column(
-      children: news.map((item) {
-        final color = item['color'] as Color;
-        return GlassContainer(
-          margin: const EdgeInsets.only(bottom: 16), // Add bottom spacing
-          width: double.infinity, // Full width
-          padding: const EdgeInsets.all(16), // Increased padding
-          borderRadius: BorderRadius.circular(24),
-          opacity: 0.8,
-          shadows: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-          child: Row(
-            children: [
-              // Gradient Icon Container
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: LinearGradient(
-                    colors: [color.withOpacity(0.1), color.withOpacity(0.25)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(item['icon'] as IconData, color: color, size: 32),
-              ),
-              const SizedBox(width: 16),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "PENGUMUMAN",
-                        style: TextStyle(
-                          fontSize: 10, // Slightly bigger
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['title'] as String,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15, // Slightly bigger
-                        height: 1.2,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item['desc']
-                          as String, // Added description for vertical layout
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['date'] as String,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],
