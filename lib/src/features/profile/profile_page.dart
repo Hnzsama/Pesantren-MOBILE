@@ -8,6 +8,8 @@ import 'package:pesantren_mobile/src/features/profile/services/profile_service.d
 import 'package:pesantren_mobile/src/features/profile/models/parent_model.dart';
 import 'package:pesantren_mobile/src/features/profile/models/school_model.dart';
 import 'package:pesantren_mobile/src/features/profile/models/student_detail_model.dart';
+import 'package:pesantren_mobile/src/features/home/services/student_service.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class ProfilePage extends StatefulWidget {
   final SantriModel activeSantri;
@@ -21,7 +23,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profileService = ProfileService();
+  final StudentService _studentService = StudentService();
   bool _isLoading = true;
+  bool _isSaving = false;
   String? _errorMessage;
 
   StudentDetailModel? _studentDetail;
@@ -56,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = ErrorHandler.getErrorMessage(e);
           _isLoading = false;
         });
       }
@@ -214,7 +218,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 children: [
                                   _buildHeaderStat(
                                     "Sisa Saldo",
-                                    "Rp ${(widget.activeSantri.uangSaku / 1000).toStringAsFixed(0)}rb",
+                                    "Rp ${((_studentDetail?.walletBalance ?? widget.activeSantri.uangSaku) / 1000).toStringAsFixed(0)}rb",
                                   ),
                                   Container(
                                     height: 30,
@@ -226,7 +230,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   _buildHeaderStat(
                                     "Limit Harian",
-                                    "Rp ${(widget.activeSantri.dailyCashLimit / 1000).toStringAsFixed(0)}rb",
+                                    "Rp ${((_studentDetail?.dailyCashLimit ?? widget.activeSantri.dailyCashLimit) / 1000).toStringAsFixed(0)}rb",
                                   ),
                                 ],
                               ),
@@ -286,7 +290,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildInfoRow(
                             Icons.account_balance_wallet,
                             "Sisa Uang Saku",
-                            "Rp ${widget.activeSantri.uangSaku}",
+                            "Rp ${_studentDetail?.walletBalance ?? widget.activeSantri.uangSaku}",
                             valueColor: AppColors.primary,
                           ),
                         ],
@@ -366,18 +370,24 @@ class _ProfilePageState extends State<ProfilePage> {
                             icon: Icons.savings_outlined,
                             title: "Limit Harian",
                             value:
-                                "Rp ${widget.activeSantri.dailyCashLimit.toInt()}",
-                            onTap: () => _showLimitDialog(context),
+                                "Rp ${(_studentDetail?.dailyCashLimit ?? widget.activeSantri.dailyCashLimit).toInt()}",
+                            onTap: () {
+                              if (!_isSaving) _showLimitDialog(context);
+                            },
                           ),
                           const Divider(height: 24, thickness: 0.5),
                           _buildSettingsRow(
                             context,
                             icon: Icons.password,
                             title: "PIN Kartu",
-                            value: widget.activeSantri.walletPin != null
+                            value:
+                                (_studentDetail?.hasPin == true ||
+                                    (widget.activeSantri.walletPin != null))
                                 ? "****** (Diatur)"
                                 : "Belum Diatur",
-                            onTap: () => _showPinDialog(context),
+                            onTap: () {
+                              if (!_isSaving) _showPinDialog(context);
+                            },
                           ),
                         ],
                       ),
@@ -623,164 +633,307 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showLimitDialog(BuildContext context) {
+    final controller = TextEditingController(
+      text: "${widget.activeSantri.dailyCashLimit.toInt()}",
+    );
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Atur Limit Harian",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Batas maksimal jajan santri per hari menggunakan Smart Card.",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              decoration: InputDecoration(
-                labelText: "Nominal Limit (Rp)",
-                prefixText: "Rp ",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-              keyboardType: TextInputType.number,
-              controller: TextEditingController(
-                text: "${widget.activeSantri.dailyCashLimit.toInt()}",
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Limit harian berhasil disimpan"),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-                child: const Text("Simpan Perubahan"),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Atur Limit Harian",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Batas maksimal jajan santri per hari menggunakan Smart Card.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: "Nominal Limit (Rp)",
+                      prefixText: "Rp ",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              final limit = double.tryParse(controller.text);
+                              if (limit == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Format nominal tidak valid"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              setModalState(() => _isSaving = true);
+                              setState(() => _isSaving = true);
+
+                              final result = await _studentService
+                                  .updateDailyCashLimit(
+                                    widget.activeSantri.id,
+                                    limit,
+                                  );
+
+                              if (mounted) {
+                                setModalState(() => _isSaving = false);
+                                setState(() => _isSaving = false);
+                                Navigator.pop(context);
+
+                                if (result['success']) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result['message']),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  // In a real app, we'd trigger a refresh of the parent state here
+                                  _loadProfileData();
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result['message']),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text("Simpan Perubahan"),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   void _showPinDialog(BuildContext context) {
+    final pinController = TextEditingController();
+    final confirmController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                "Ubah PIN Kartu",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "PIN digunakan untuk konfirmasi pembayaran di kantin.",
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "PIN Baru (6 Digit)",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("PIN berhasil diperbarui")),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                  child: const Text("Simpan PIN Baru"),
-                ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Ubah PIN Kartu",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "PIN digunakan untuk konfirmasi pembayaran di kantin.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: pinController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: "PIN Baru (6 Digit)",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      prefixIcon: const Icon(Icons.lock_outline),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: "Konfirmasi PIN Baru",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      prefixIcon: const Icon(Icons.lock_clock_outlined),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              final pin = pinController.text;
+                              final confirm = confirmController.text;
+
+                              if (pin.length != 6) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("PIN harus 6 digit"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (pin != confirm) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Konfirmasi PIN tidak cocok"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              setModalState(() => _isSaving = true);
+                              setState(() => _isSaving = true);
+
+                              final result = await _studentService
+                                  .updateWalletPin(
+                                    widget.activeSantri.id,
+                                    pin,
+                                    confirm,
+                                  );
+
+                              if (mounted) {
+                                setModalState(() => _isSaving = false);
+                                setState(() => _isSaving = false);
+
+                                if (result['success']) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result['message']),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  _loadProfileData();
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result['message']),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text("Simpan PIN Baru"),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

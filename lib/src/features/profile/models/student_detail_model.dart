@@ -9,6 +9,7 @@ class StudentDetailModel {
   final double? walletBalance;
   final double? dailyCashLimit;
   final bool? allowTransaction;
+  final bool hasPin;
   final LevelModel? level;
 
   const StudentDetailModel({
@@ -22,6 +23,7 @@ class StudentDetailModel {
     this.walletBalance,
     this.dailyCashLimit,
     this.allowTransaction,
+    this.hasPin = false,
     this.level,
   });
 
@@ -29,16 +31,19 @@ class StudentDetailModel {
     return StudentDetailModel(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? json['full_name'] ?? 'Unknown',
-      nis: json['nis'],
-      photoUrl: json['photo_url'],
-      status: json['status'] ?? 'ACTIVE',
-      gender: json['gender'],
-      birthDate: json['birth_date'],
+      nis: json['nis']?.toString(),
+      photoUrl: json['photo_url']?.toString(),
+      status: json['status']?.toString() ?? 'ACTIVE',
+      gender: json['gender']?.toString(),
+      birthDate: json['birth_date']?.toString(),
       walletBalance: double.tryParse(json['wallet_balance']?.toString() ?? '0'),
       dailyCashLimit: double.tryParse(
         json['daily_cash_limit']?.toString() ?? '0',
       ),
-      allowTransaction: json['allow_transaction'],
+      allowTransaction:
+          json['allow_transaction'] == true ||
+          json['allow_transaction']?.toString() == 'true',
+      hasPin: json['has_pin'] == true || json['has_pin']?.toString() == 'true',
       level: json['level'] != null ? LevelModel.fromJson(json['level']) : null,
     );
   }
@@ -49,12 +54,15 @@ class StudentDetailModel {
 }
 
 class LevelModel {
-  final int id;
+  final String id;
   final String name;
 
   const LevelModel({required this.id, required this.name});
 
   factory LevelModel.fromJson(Map<String, dynamic> json) {
-    return LevelModel(id: json['id'] ?? 0, name: json['name'] ?? '-');
+    return LevelModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '-',
+    );
   }
 }
