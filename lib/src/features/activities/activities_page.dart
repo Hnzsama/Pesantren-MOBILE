@@ -92,6 +92,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
             }
           },
         ),
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchData),
+        ],
         title: const Text("Aktivitas"),
         centerTitle: true,
         backgroundColor: AppColors.primary,

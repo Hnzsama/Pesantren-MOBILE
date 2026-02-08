@@ -187,6 +187,15 @@ class _AchievementsPageState extends State<AchievementsPage> {
                             }
                           },
                         ),
+                        actions: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                            ),
+                            onPressed: _loadData,
+                          ),
+                        ],
                         title: const Text(
                           "Buku Prestasi",
                           style: TextStyle(

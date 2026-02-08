@@ -6,9 +6,24 @@ import 'package:pesantren_mobile/src/features/splash/splash_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:pesantren_mobile/src/shared/services/notification_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  await NotificationService().initialize();
+
   await initializeDateFormatting('id_ID', null);
   await dotenv.load(fileName: ".env");
   // PaymentService init moved to Splash Screen to avoid Activity context issues

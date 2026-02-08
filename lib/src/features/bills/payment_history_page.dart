@@ -229,6 +229,12 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage>
                           }
                         },
                       ),
+                      actions: [
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          onPressed: _loadBills,
+                        ),
+                      ],
                       title: const Text(
                         "Arsip Keuangan",
                         style: TextStyle(
