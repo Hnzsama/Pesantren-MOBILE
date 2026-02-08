@@ -4,6 +4,7 @@ import 'package:pesantren_mobile/src/features/kajian/models/kajian_model.dart';
 import 'package:pesantren_mobile/src/features/kajian/service/kajian_service.dart';
 import 'package:pesantren_mobile/src/features/kajian/widgets/kajian_card.dart';
 import 'package:pesantren_mobile/src/features/kajian/kajian_detail_page.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class KajianPage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -159,7 +160,36 @@ class _KajianPageState extends State<KajianPage> {
                   body: snapshot.connectionState == ConnectionState.waiting
                       ? const Center(child: CircularProgressIndicator())
                       : snapshot.hasError
-                      ? Center(child: Text("Error: ${snapshot.error}"))
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 48,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  ErrorHandler.getErrorMessage(snapshot.error),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _videosFuture = _service.getVideos();
+                                    });
+                                  },
+                                  child: const Text("Coba Lagi"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : data.isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(

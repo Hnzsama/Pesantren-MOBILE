@@ -4,28 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class KajianService {
-  // Mock Data
-  // Mock Data (Fallback)
-  static final List<VideoLecture> _mockVideos = [
-    VideoLecture(
-      id: '1',
-      title: 'Tausiyah Rutin Bulanan',
-      videoId: 'APaxt8Bp4D0',
-      description:
-          'Kajian rutin bulanan membahas pentingnya pendidikan karakter di era digital.',
-      publishedAt: DateTime(2025, 12, 10),
-    ),
-  ];
-
   Future<List<VideoLecture>> getVideos() async {
     final authService = AuthService();
     final token = await authService.getToken();
 
     if (token == null) {
-      debugPrint('No token found, returning mock data');
-      return _mockVideos;
+      throw ApiException('Sesi berakhir. Silakan login kembali.');
     }
 
     final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
@@ -52,12 +39,16 @@ class KajianService {
 
         return list.map((json) => VideoLecture.fromJson(json)).toList();
       } else {
-        debugPrint('Failed to load kajian: ${response.body}');
-        return _mockVideos; // Fallback
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Error fetching kajian: $e');
-      return _mockVideos; // Fallback
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 }
