@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:pesantren_mobile/src/features/bills/models/bill_model.dart';
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 /// Service to handle bill data retrieval from API.
 class BillService {
@@ -14,7 +15,7 @@ class BillService {
   Future<List<StudentBill>> getBills(String studentId) async {
     final token = await _authService.getToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw ApiException('Sesi berakhir. Silakan login kembali.');
     }
 
     final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
@@ -40,11 +41,16 @@ class BillService {
 
         return data.map((json) => StudentBill.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load bills: ${response.statusCode}');
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Error fetching bills: $e');
-      rethrow;
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 
@@ -96,7 +102,10 @@ class BillService {
     if (paymentType != null) body['payment_type'] = paymentType;
     if (adminFee != null) body['admin_fee'] = adminFee;
     if (paymentFee != null) body['payment_fee'] = paymentFee;
+    if (paymentFee != null) body['payment_fee'] = paymentFee;
     if (studentId != null) body['student_id'] = studentId;
+    // Enforce payment_method as payment_gateway per new enum constraint
+    body['payment_method'] = 'payment_gateway';
 
     final response = await http.post(
       uri,

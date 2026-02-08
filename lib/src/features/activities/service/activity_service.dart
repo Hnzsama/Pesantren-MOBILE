@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:pesantren_mobile/src/features/activities/models/activity_model.dart';
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class ActivityService {
   /// Fetches activities for a student on a specific date.
@@ -19,8 +20,7 @@ class ActivityService {
     final token = await authService.getToken();
 
     if (token == null) {
-      debugPrint('No token found');
-      return [];
+      throw ApiException('Sesi berakhir. Silakan login kembali.');
     }
 
     final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
@@ -55,12 +55,16 @@ class ActivityService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((item) => ActivityWithStatus.fromJson(item)).toList();
       } else {
-        debugPrint('Failed to load activities: ${response.body}');
-        return [];
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Error fetching activities: $e');
-      return [];
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 

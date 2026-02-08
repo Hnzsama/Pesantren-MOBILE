@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 import 'package:pesantren_mobile/src/features/transactions/models/transaction_model.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class TransactionService {
   Future<List<TransactionModel>> getTransactions({
@@ -51,6 +52,7 @@ class TransactionService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -61,12 +63,16 @@ class TransactionService {
         final List<dynamic> list = data['data'] ?? [];
         return list.map((json) => TransactionModel.fromJson(json)).toList();
       } else {
-        debugPrint('Failed to load transactions: ${response.body}');
-        return [];
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Error fetching transactions: $e');
-      return [];
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 }

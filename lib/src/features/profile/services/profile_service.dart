@@ -6,6 +6,7 @@ import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
 import 'package:pesantren_mobile/src/features/profile/models/parent_model.dart';
 import 'package:pesantren_mobile/src/features/profile/models/school_model.dart';
 import 'package:pesantren_mobile/src/features/profile/models/student_detail_model.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class ProfileService {
   final AuthService _authService = AuthService();
@@ -15,7 +16,7 @@ class ProfileService {
   Future<Map<String, dynamic>> getStudentProfile(String studentId) async {
     final token = await _authService.getToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw ApiException('Sesi berakhir. Silakan login kembali.');
     }
 
     final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
@@ -51,13 +52,16 @@ class ProfileService {
               : null,
         };
       } else {
-        throw Exception(
-          'Failed to load student profile: ${response.statusCode}',
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
         );
       }
+    } on ApiException catch (_) {
+      rethrow;
     } catch (e) {
       debugPrint('Error fetching student profile: $e');
-      rethrow;
+      throw ApiException(ErrorHandler.getErrorMessage(e));
     }
   }
 

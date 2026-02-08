@@ -4,6 +4,14 @@ import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
 import 'package:pesantren_mobile/src/features/reports/models/report_models.dart';
 import 'package:pesantren_mobile/src/features/reports/service/report_service.dart';
 import 'package:pesantren_mobile/src/shared/animations/scale_button.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io' as io;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StudentReportPage extends StatefulWidget {
   final SantriModel activeSantri;
@@ -29,6 +37,9 @@ class _StudentReportPageState extends State<StudentReportPage> {
   // Async State
   bool _isLoadingFilters = true;
   bool _isLoadingReport = false;
+  bool _isDownloading = false;
+  String? _filterError;
+  String? _reportError;
   StudentReport? _report;
 
   @override
@@ -46,48 +57,61 @@ class _StudentReportPageState extends State<StudentReportPage> {
   }
 
   Future<void> _loadFilters() async {
+    setState(() {
+      _isLoadingFilters = true;
+      _filterError = null;
+    });
     try {
-      final years = await _service.getAcademicYears();
-      setState(() {
-        _years = years;
-        // Default to active year or first
-        _selectedYear = years.firstWhere(
-          (y) => y.isActive,
-          orElse: () => years.first,
-        );
-        _isLoadingFilters = false;
-      });
+      final years = await _service.getAcademicFilters();
+      if (mounted) {
+        setState(() {
+          _years = years;
+          // Default to active year or first
+          _selectedYear = years.firstWhere(
+            (y) => y.isActive,
+            orElse: () => years.first,
+          );
+          _isLoadingFilters = false;
+        });
 
-      if (_selectedYear != null) {
-        await _loadSemesters(_selectedYear!.id);
+        if (_selectedYear != null) {
+          _updateSemesters(_selectedYear!);
+        }
       }
     } catch (e) {
-      // Handle error
-      if (mounted) setState(() => _isLoadingFilters = false);
+      if (mounted) {
+        setState(() {
+          _filterError = ErrorHandler.getErrorMessage(e);
+          _isLoadingFilters = false;
+        });
+      }
     }
   }
 
-  Future<void> _loadSemesters(String yearId) async {
-    // When year changes, load semesters
-    setState(() => _isLoadingReport = true); // Block UI while changing context
-    try {
-      final semesters = await _service.getSemesters(yearId);
-      setState(() {
-        _semesters = semesters;
-        // Default to Ganjil (ODD) usually comes first, or first available
-        _selectedSemester = semesters.firstOrNull;
-      });
+  void _updateSemesters(AcademicYear year) {
+    setState(() {
+      _semesters = year.semesters;
+      // Default to first semester available
+      _selectedSemester = _semesters.firstOrNull;
+    });
 
+    if (_selectedSemester != null) {
       _loadReport();
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingReport = false);
+    } else {
+      setState(() {
+        _report = null;
+        _reportError = null;
+      });
     }
   }
 
   Future<void> _loadReport() async {
     if (_selectedSemester == null) return;
 
-    setState(() => _isLoadingReport = true);
+    setState(() {
+      _isLoadingReport = true;
+      _reportError = null;
+    });
     try {
       final report = await _service.getReport(
         widget.activeSantri.id,
@@ -100,7 +124,12 @@ class _StudentReportPageState extends State<StudentReportPage> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingReport = false);
+      if (mounted) {
+        setState(() {
+          _reportError = ErrorHandler.getErrorMessage(e);
+          _isLoadingReport = false;
+        });
+      }
     }
   }
 
@@ -111,7 +140,7 @@ class _StudentReportPageState extends State<StudentReportPage> {
         _selectedSemester = null; // Reset semester
         _report = null;
       });
-      _loadSemesters(year.id);
+      _updateSemesters(year);
     }
   }
 
@@ -121,6 +150,124 @@ class _StudentReportPageState extends State<StudentReportPage> {
         _selectedSemester = semester;
       });
       _loadReport();
+    }
+  }
+
+  Future<void> _downloadReport() async {
+    // Extra safety check for the report instance
+    final reportToken = _report;
+    if (reportToken == null || reportToken.fileUrls.isEmpty) {
+      debugPrint("No files available for download");
+      return;
+    }
+
+    setState(() => _isDownloading = true);
+
+    try {
+      final baseUrlRaw = dotenv.env['APP_URL'] ?? '';
+      final baseUri = Uri.parse(baseUrlRaw);
+      final rootUri = Uri(
+        scheme: baseUri.scheme,
+        host: baseUri.host,
+        port: baseUri.port,
+      );
+
+      if (kIsWeb) {
+        // Web Implementation: Open URLs in new tabs
+        for (var urlString in _report!.fileUrls) {
+          Uri finalUri;
+          if (urlString.startsWith('http')) {
+            finalUri = Uri.parse(urlString);
+          } else {
+            finalUri = rootUri.resolve(urlString);
+          }
+
+          if (await canLaunchUrl(finalUri)) {
+            await launchUrl(finalUri, mode: LaunchMode.externalApplication);
+          }
+        }
+        if (mounted) setState(() => _isDownloading = false);
+        return;
+      }
+
+      // Mobile Implementation: Download to temp and share
+      List<XFile> downloadedFiles = [];
+
+      for (int i = 0; i < _report!.fileUrls.length; i++) {
+        var urlString = _report!.fileUrls[i];
+
+        Uri finalUri;
+        if (urlString.startsWith('http')) {
+          finalUri = Uri.parse(urlString);
+        } else {
+          finalUri = rootUri.resolve(urlString);
+        }
+
+        debugPrint("Downloading page ${i + 1} from: ${finalUri.toString()}");
+
+        final response = await http.get(finalUri);
+
+        if (response.statusCode == 200) {
+          final bytes = response.bodyBytes;
+
+          // Resolve extension
+          String extension = '.pdf';
+          final path = finalUri.path.toLowerCase();
+          if (path.endsWith('.webp'))
+            extension = '.webp';
+          else if (path.endsWith('.png'))
+            extension = '.png';
+          else if (path.endsWith('.jpg'))
+            extension = '.jpg';
+          else if (path.endsWith('.jpeg'))
+            extension = '.jpeg';
+
+          final fileName =
+              "Rapor_${widget.activeSantri.nama.replaceAll(' ', '_')}_${_selectedYear?.name.replaceAll('/', '-')}_${_selectedSemester?.type == SemesterType.GANJIL ? 'Ganjil' : 'Genap'}_Hal${i + 1}$extension";
+
+          final tempDir = await getTemporaryDirectory();
+          final file = io.File('${tempDir.path}/$fileName');
+          await file.writeAsBytes(bytes);
+          downloadedFiles.add(XFile(file.path));
+        } else {
+          debugPrint(
+            "Failed to download page ${i + 1}: ${response.statusCode}",
+          );
+        }
+      }
+
+      if (mounted) {
+        setState(() => _isDownloading = false);
+
+        if (downloadedFiles.isNotEmpty) {
+          await Share.shareXFiles(
+            downloadedFiles,
+            subject: 'Unduh Rapor ${widget.activeSantri.nama}',
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Gagal mengunduh file rapor. Silakan coba lagi nanti.",
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Download error: $e");
+      if (mounted) {
+        setState(() => _isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Terjadi kesalahan: ${ErrorHandler.getErrorMessage(e)}",
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -143,7 +290,7 @@ class _StudentReportPageState extends State<StudentReportPage> {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  expandedHeight: 160, // Consistent with Achievements
+                  expandedHeight: 160,
                   pinned: true,
                   backgroundColor: AppColors.primary,
                   elevation: 0,
@@ -239,31 +386,83 @@ class _StudentReportPageState extends State<StudentReportPage> {
                 ),
               ];
             },
-            body: _isLoadingFilters
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // 1. Filters Section
-                        _buildFilters(),
+            body: _buildBody(),
+          ),
+        ],
+      ),
+    );
+  }
 
-                        const SizedBox(height: 24),
+  Widget _buildBody() {
+    if (_isLoadingFilters) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-                        // 2. Report Content
-                        _isLoadingReport
-                            ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(40),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            : _buildReportArea(),
-                      ],
+    if (_filterError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                _filterError!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loadFilters,
+                child: const Text("Coba Lagi"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Filters Section
+          _buildFilters(),
+
+          const SizedBox(height: 24),
+
+          // 2. Report Content
+          if (_isLoadingReport)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_reportError != null)
+            Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    _reportError!,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: _loadReport,
+                    child: const Text(
+                      "Gagal memuat rapor, klik untuk mencoba lagi",
                     ),
                   ),
-          ),
+                ],
+              ),
+            )
+          else
+            _buildReportArea(),
         ],
       ),
     );
@@ -277,7 +476,7 @@ class _StudentReportPageState extends State<StudentReportPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Softer shadow
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -425,7 +624,7 @@ class _StudentReportPageState extends State<StudentReportPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Softer shadow
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -457,14 +656,18 @@ class _StudentReportPageState extends State<StudentReportPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                // TODO: View PDF logic
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Mengunduh Rapor...")),
-                );
-              },
-              icon: const Icon(Icons.visibility),
-              label: const Text("LIHAT RAPOR"),
+              onPressed: _isDownloading ? null : _downloadReport,
+              icon: _isDownloading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.download),
+              label: Text(_isDownloading ? "MENGUNDUH..." : "UNDUH RAPOR"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

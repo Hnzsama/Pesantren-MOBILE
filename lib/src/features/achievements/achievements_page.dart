@@ -4,6 +4,7 @@ import 'package:pesantren_mobile/src/features/achievements/models/achievement_mo
 import 'package:pesantren_mobile/src/features/achievements/service/achievement_service.dart';
 import 'package:pesantren_mobile/src/features/achievements/widgets/achievement_card.dart';
 import 'package:pesantren_mobile/src/features/home/models/santri_model.dart';
+import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class AchievementsPage extends StatefulWidget {
   final SantriModel activeSantri;
@@ -200,7 +201,32 @@ class _AchievementsPageState extends State<AchievementsPage> {
                   body: snapshot.connectionState == ConnectionState.waiting
                       ? const Center(child: CircularProgressIndicator())
                       : snapshot.hasError
-                      ? Center(child: Text("Error: ${snapshot.error}"))
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 48,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  ErrorHandler.getErrorMessage(snapshot.error),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _loadData,
+                                  child: const Text("Coba Lagi"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : data.isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(
