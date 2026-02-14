@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kartu Santri Elektronik</title>
+    <style>
+        :root {
+            /* Copied colors from the image */
+            --bg-base: #499F9C;
+            /* Medium Teal */
+            --bg-dark: #2A7A78;
+            /* Darker Teal for curve */
+            --bg-shape: #3B8D8A;
+            --text-white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .card-container {
+            width: 85.6mm;
+            height: 53.98mm;
+            position: relative;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            background-color: var(--bg-base);
+            color: var(--text-white);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            transform: scale(1.5);
+        }
+
+        /* --- Background Curves --- */
+
+        /* The large dark wave from bottom-right */
+        .wave-bottom {
+            position: absolute;
+            bottom: -50%;
+            right: -20%;
+            width: 100%;
+            height: 140%;
+            background-color: var(--bg-dark);
+            border-radius: 50%;
+            transform: rotate(-15deg);
+            z-index: 0;
+        }
+
+        /* The subtle curve on the left/top */
+        .wave-top-left {
+            position: absolute;
+            top: -30%;
+            left: -30%;
+            width: 80%;
+            height: 120%;
+            background-color: rgba(0, 0, 0, 0.05);
+            /* Subtle shadow feel */
+            border-radius: 40%;
+            transform: rotate(20deg);
+            z-index: 0;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Replicating the green geometric logo */
+        .logo-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #FFD700;
+            /* Gold accent */
+        }
+
+        .org-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .org-subtitle {
+            font-size: 8px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .org-title {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bank-logo svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .bank-text {
+            font-size: 14px;
+            font-weight: 700;
+            font-style: italic;
+            font-family: 'Trebuchet MS', sans-serif;
+            /* Close to typical bank font */
+        }
+
+        /* --- Center --- */
+        .center-section {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            margin-top: -5px;
+            /* Adjust vertical center */
+        }
+
+        .card-label {
+            font-size: 11px;
+            letter-spacing: 4px;
+            /* Wide spacing */
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .card-number {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        /* --- Footer --- */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2px;
+        }
+
+        .qr-box {
+            background: white;
+            padding: 3px;
+            width: 45px;
+            height: 45px;
+            border-radius: 2px;
+            /* Sharp corners like standardized QR */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .text-info {
+            flex-grow: 1;
+            margin-left: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 48px;
+        }
+
+        .student-name {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .student-id {
+            font-size: 9px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .validity {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .valid-label {
+            font-size: 8px;
+            opacity: 0.8;
+        }
+
+        .valid-date {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mascot {
+            margin-top: 4px;
+            width: 20px;
+            height: 20px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card-container">
+        <!-- Background Logic -->
+        <div class="wave-bottom"></div>
+        <div class="wave-top-left"></div>
+
+        <div class="card-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="logo-icon">
+                        <!-- Geometric "Plant/Stand" Logo -->
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2L4 6l8 4 8-4-8-4z" fill="#D4AF37" /> <!-- Top Diamond (Gold) -->
+                            <path d="M4 8l8 4 8-4" fill="none" stroke="#D4AF37" stroke-width="2" />
+                            <path d="M4 12l8 4 8-4" fill="none" stroke="#D4AF37" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="org-text">
+                        <span class="org-subtitle">PONDOK PESANTREN</span>
+                        <span class="org-title">SANDIGI</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="bank-logo">
+                        <!-- Icon similar to building -->
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm19-12h-2V7h2v3zm-9-5L2 9h19L12 5z" />
+                        </svg>
+                    </div>
+                    <span class="bank-text">BankSyariah</span>
+                </div>
+            </div>
+
+            <!-- Center -->
+            <div class="center-section">
+                <div class="card-label">KARTU SANTRI</div>
+                <div class="card-number">0814 8160 0520 3605</div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div class="qr-box">
+                    <!-- Standard QR Code Look -->
+                    <svg viewBox="0 0 33 33" width="100%" height="100%" shape-rendering="crispEdges">
+                        <rect x="0" y="0" width="33" height="33" fill="white" />
+                        <!-- Finder Patterns -->
+                        <path d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z" fill="black" />
+                        <path d="M26,0 h7 v7 h-7 z M27,1 v5 h5 v-5 z M28,2 h3 v3 h-3 z" fill="black" />
+                        <path d="M0,26 h7 v7 h-7 z M1,27 v5 h5 v-5 z M2,28 h3 v3 h-3 z" fill="black" />
+                        <!-- Random Data Dots -->
+                        <rect x="10" y="0" width="1" height="1" fill="black" />
+                        <rect x="12" y="2" width="1" height="1" fill="black" />
+                        <rect x="20" y="5" width="2" height="2" fill="black" />
+                        <rect x="15" y="15" width="3" height="3" fill="black" />
+                        <rect x="8" y="20" width="1" height="1" fill="black" />
+                        <rect x="22" y="22" width="4" height="4" fill="black" />
+                        <rect x="10" y="26" width="1" height="1" fill="black" />
+                    </svg>
+                </div>
+
+                <div class="text-info">
+                    <span class="student-name">SANTRI 1 OF WALI 1</span>
+                    <span class="student-id">NIS 2026010001</span>
+                </div>
+
+                <div class="validity">
+                    <span class="valid-label">Valid Thru</span>
+                    <span class="valid-date">18/30</span>
+                    <div class="mascot">
+                        <!-- Red Line Mascot -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FF5252" stroke-width="2">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M9 10h.01 M15 10h.01" stroke-width="3" stroke-linecap="round" />
+                            <path d="M9 15s1.5 1.5 3 1.5 3-1.5 3-1.5" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
