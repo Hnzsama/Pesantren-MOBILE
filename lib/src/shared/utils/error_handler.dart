@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
@@ -28,6 +29,15 @@ class ErrorHandler {
     }
 
     if (error is http.Response) {
+      try {
+        final body = jsonDecode(error.body);
+        if (body is Map<String, dynamic> && body['message'] != null) {
+          return body['message'];
+        }
+      } catch (_) {
+        // Fallback to default messages if parsing fails
+      }
+
       switch (error.statusCode) {
         case 400:
           return 'Permintaan tidak valid.';
@@ -39,6 +49,8 @@ class ErrorHandler {
           return 'Data tidak ditemukan.';
         case 422:
           return 'Data yang Anda masukkan tidak valid.';
+        case 429:
+          return 'Terlalu banyak permintaan. Silakan coba lagi nanti.';
         case 500:
           return 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.';
         default:

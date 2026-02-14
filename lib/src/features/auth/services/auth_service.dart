@@ -171,4 +171,147 @@ class AuthService {
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
   }
+
+  // --- Forgot Password ---
+
+  Future<bool> forgotPassword(String email) async {
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
+    final url = Uri.parse('$baseUrl/forgot-password');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ErrorHandler.getErrorMessage(e));
+    }
+  }
+
+  Future<bool> resetPassword(
+    String email,
+    String otpCode,
+    String password,
+    String passwordConfirmation,
+  ) async {
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
+    final url = Uri.parse('$baseUrl/reset-password');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: jsonEncode({
+          'email': email,
+          'otp_code': otpCode,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ErrorHandler.getErrorMessage(e));
+    }
+  }
+
+  // --- Email Verification ---
+
+  Future<bool> verifyEmailOtp(String otpCode) async {
+    final token = await getToken();
+    if (token == null) throw ApiException('User not authenticated');
+
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
+    final url = Uri.parse('$baseUrl/email/verify-otp');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: jsonEncode({'otp_code': otpCode}),
+      );
+
+      if (response.statusCode == 200) {
+        // Refresh user data to reflect verification status
+        await getUser();
+        return true;
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ErrorHandler.getErrorMessage(e));
+    }
+  }
+
+  Future<bool> resendVerification() async {
+    final token = await getToken();
+    if (token == null) throw ApiException('User not authenticated');
+
+    final baseUrl = dotenv.env['APP_URL'] ?? 'http://localhost:8000/api';
+    final url = Uri.parse('$baseUrl/email/verification-notification');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw ApiException(
+          ErrorHandler.getErrorMessage(response),
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ErrorHandler.getErrorMessage(e));
+    }
+  }
 }
