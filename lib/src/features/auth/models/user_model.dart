@@ -6,6 +6,7 @@ class UserModel {
   final String name;
   final String username;
   final String? email;
+  final DateTime? emailVerifiedAt;
   final List<String> roles;
   final List<SantriModel> students;
 
@@ -16,6 +17,7 @@ class UserModel {
     required this.name,
     required this.username,
     this.email,
+    this.emailVerifiedAt,
     required this.roles,
     required this.students,
   });
@@ -32,6 +34,9 @@ class UserModel {
       name: json['name'] ?? 'User',
       username: json['username'] ?? '',
       email: json['email'],
+      emailVerifiedAt: json['email_verified_at'] != null
+          ? DateTime.tryParse(json['email_verified_at'])
+          : null,
       roles:
           (json['roles'] as List?)
               ?.map((e) => e is Map ? e['name'].toString() : e.toString())
@@ -57,6 +62,7 @@ class UserModel {
         name: user.name,
         username: user.username,
         email: user.email,
+        emailVerifiedAt: user.emailVerifiedAt,
         roles: user.roles,
         students: updatedStudents,
       );
@@ -71,6 +77,7 @@ class UserModel {
       'name': name,
       'username': username,
       'email': email,
+      'email_verified_at': emailVerifiedAt?.toIso8601String(),
       'roles': roles,
       'students': students.map((e) => e.toJson()).toList(),
     };

@@ -696,7 +696,11 @@ class StudentIdCard extends StatelessWidget {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            card?.cardNumber ?? "XXXX  XXXX  XXXX  XXXX",
+                            (card?.cardNumber ?? "XXXX  XXXX  XXXX  XXXX")
+                                .replaceAllMapped(
+                                  RegExp(r".{4}"),
+                                  (match) => "${match.group(0)} ",
+                                ),
                             style: TextStyle(
                               fontFamily: 'Courier',
                               fontSize:

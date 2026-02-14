@@ -3,6 +3,8 @@ import 'package:pesantren_mobile/src/constants/app_colors.dart';
 
 import 'package:pesantren_mobile/src/features/home/home_page.dart';
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
+import 'package:pesantren_mobile/src/features/auth/forgot_password_page.dart';
+import 'package:pesantren_mobile/src/features/auth/email_verification_page.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class LoginPage extends StatefulWidget {
@@ -47,9 +49,18 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
           // Navigate to Home
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
+          final user = await _authService.getSavedUser();
+          if (user?.emailVerifiedAt == null) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const EmailVerificationPage(),
+              ),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          }
         }
       } catch (e) {
         if (!mounted) return;
@@ -148,7 +159,13 @@ class _LoginPageState extends State<LoginPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordPage(),
+                          ),
+                        );
+                      },
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.primaryDark,
                       ),

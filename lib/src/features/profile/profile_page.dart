@@ -10,7 +10,6 @@ import 'package:pesantren_mobile/src/features/profile/models/school_model.dart';
 import 'package:pesantren_mobile/src/features/profile/models/student_detail_model.dart';
 import 'package:pesantren_mobile/src/features/home/services/student_service.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
-import 'package:pesantren_mobile/src/shared/services/notification_service.dart';
 import 'package:flutter/services.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -33,22 +32,11 @@ class _ProfilePageState extends State<ProfilePage> {
   StudentDetailModel? _studentDetail;
   ParentModel? _parent;
   SchoolModel? _school;
-  String? _fcmToken;
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
-    _loadFcmToken();
-  }
-
-  Future<void> _loadFcmToken() async {
-    final token = await NotificationService().getToken();
-    if (mounted) {
-      setState(() {
-        _fcmToken = token;
-      });
-    }
   }
 
   Future<void> _loadProfileData() async {
@@ -406,74 +394,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // SECTION: Debug Notifikasi (Only for Testing/Dev)
-                    _buildSectionTitle("Debug Notifikasi"),
-                    const SizedBox(height: 12),
-                    GlassContainer(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSettingsRow(
-                            context,
-                            icon: Icons.notifications_active_outlined,
-                            title: "Test Notifikasi Lokal",
-                            value: "Klik untuk memicu notifikasi",
-                            onTap: () {
-                              NotificationService().showTestNotification();
-                            },
-                          ),
-                          const Divider(height: 24, thickness: 0.5),
-                          const Text(
-                            "FCM Token Device:",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _fcmToken ??
-                                      "Gagal memuat token / Hubungkan internet",
-                                  style: TextStyle(
-                                    color: _fcmToken == null
-                                        ? Colors.red
-                                        : Colors.black,
-                                    fontSize: 11,
-                                    fontFamily: 'monospace',
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.copy, size: 20),
-                                onPressed: () {
-                                  if (_fcmToken != null) {
-                                    Clipboard.setData(
-                                      ClipboardData(text: _fcmToken!),
-                                    );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Token disalin ke clipboard",
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
 
                     const SizedBox(height: 48),
 
