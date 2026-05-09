@@ -3,8 +3,6 @@ import 'package:pesantren_mobile/src/constants/app_colors.dart';
 
 import 'package:pesantren_mobile/src/features/home/home_page.dart';
 import 'package:pesantren_mobile/src/features/auth/services/auth_service.dart';
-import 'package:pesantren_mobile/src/features/auth/forgot_password_page.dart';
-import 'package:pesantren_mobile/src/features/auth/email_verification_page.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 
 class LoginPage extends StatefulWidget {
