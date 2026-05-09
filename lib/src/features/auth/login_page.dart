@@ -46,19 +46,10 @@ class _LoginPageState extends State<LoginPage> {
               backgroundColor: AppColors.primary,
             ),
           );
-          // Navigate to Home
-          final user = await _authService.getSavedUser();
-          if (user?.emailVerifiedAt == null) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const EmailVerificationPage(),
-              ),
-            );
-          } else {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
-          }
+          // Always navigate to Home, bypassing email verification
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
         }
       } catch (e) {
         if (!mounted) return;
