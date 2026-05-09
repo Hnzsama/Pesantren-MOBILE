@@ -27,6 +27,8 @@ import 'package:pesantren_mobile/src/features/news/widgets/news_home_widget.dart
 import 'package:pesantren_mobile/src/features/news/pages/news_list_page.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 import 'package:pesantren_mobile/src/shared/services/notification_service.dart';
+import 'package:pesantren_mobile/src/shared/services/version_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ... existing imports ...
 import 'package:pesantren_mobile/src/shared/widgets/glass_bottom_nav.dart';
@@ -74,6 +76,49 @@ class _HomePageState extends State<HomePage> {
         _handleNotificationPayload(payload);
       }
     });
+
+    // Check for App Updates
+    _checkAppUpdate();
+  }
+
+  Future<void> _checkAppUpdate() async {
+    // Delay slightly to not interfere with initial load
+    await Future.delayed(const Duration(seconds: 3));
+    final updateService = VersionService();
+    final updateInfo = await updateService.checkForUpdate();
+
+    if (updateInfo != null && mounted) {
+      _showUpdateDialog(updateInfo);
+    }
+  }
+
+  void _showUpdateDialog(UpdateInfo update) {
+    showDialog(
+      context: context,
+      barrierDismissible: !update.forceUpdate,
+      builder: (context) => AlertDialog(
+        title: const Text("Pembaruan Tersedia"),
+        content: Text(
+          "Versi baru (${update.latestVersion}) telah tersedia. Silakan perbarui aplikasi Anda untuk mendapatkan fitur terbaru dan perbaikan bug.",
+        ),
+        actions: [
+          if (!update.forceUpdate)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Nanti"),
+            ),
+          ElevatedButton(
+            onPressed: () async {
+              final url = Uri.parse(update.downloadUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text("Perbarui Sekarang"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
