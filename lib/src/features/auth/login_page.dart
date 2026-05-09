@@ -145,22 +145,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   // Forgot Password
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordPage(),
-                          ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primaryDark,
-                      ),
-                      child: const Text("Lupa Password?"),
-                    ),
-                  ),
                   const SizedBox(height: 16),
 
                   // Login Button
