@@ -1,7 +1,7 @@
 name: pesantren_mobile
 description: "Aplikasi Wali Santri untuk memantau saldo, tagihan, aktivitas, dan perkembangan santri secara real-time."
 publish_to: "none"
-version: 0.1.0
+version: 1.0.0+1
 
 environment:
   sdk: ^3.10.4
@@ -29,6 +29,7 @@ dependencies:
   firebase_core: ^3.10.1
   firebase_messaging: ^15.2.1
   flutter_local_notifications: ^18.0.1
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
