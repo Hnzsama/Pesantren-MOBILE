@@ -11,6 +11,7 @@ import 'package:pesantren_mobile/src/features/profile/models/student_detail_mode
 import 'package:pesantren_mobile/src/features/home/services/student_service.dart';
 import 'package:pesantren_mobile/src/shared/utils/error_handler.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfilePage extends StatefulWidget {
   final SantriModel activeSantri;
@@ -474,9 +475,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 50),
-                    const Text(
-                      "Versi Aplikasi v1.0.0",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        final version = snapshot.data?.version ?? '1.0.0';
+                        final build = snapshot.data?.buildNumber ?? '1';
+                        return Text(
+                          "Versi Aplikasi v$version+$build",
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
                   ],
