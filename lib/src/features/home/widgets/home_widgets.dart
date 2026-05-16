@@ -274,7 +274,7 @@ class StudentIdCardLegacy extends StatelessWidget {
                           ],
                         ),
                         child: Image.asset(
-                          'assets/logo.png',
+                          'assets/logo_sandigi.png',
                           width: 42,
                           height: 42,
                         ),
@@ -565,7 +565,7 @@ class StudentIdCard extends StatelessWidget {
                                   height: logoSize,
                                   width: logoSize, // Keep aspect ratio
                                   child: Image.asset(
-                                    'assets/logo.png',
+                                    'assets/logo_sandigi.png',
                                     fit: BoxFit.contain,
                                   ),
                                 ),

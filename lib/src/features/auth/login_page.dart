@@ -81,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo Area
-                  Center(child: Image.asset('assets/logo.png', height: 120)),
+                  Center(child: Image.asset('assets/logo_sandigi.png', height: 120)),
                   const SizedBox(height: 32),
 
                   // Welcome Text

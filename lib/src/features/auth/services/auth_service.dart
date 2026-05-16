@@ -124,19 +124,24 @@ class AuthService {
   // Check if token is valid by fetching user.
   // Returns true if valid, false otherwise.
   Future<bool> checkAuth() async {
-    final token = await getToken();
-    if (token == null) return false;
+    try {
+      final token = await getToken();
+      if (token == null) return false;
 
-    // We try to fetch the user. If we get a 401 or similar, the token is invalid.
-    final user = await getUser();
+      // We try to fetch the user. If we get a 401 or similar, the token is invalid.
+      final user = await getUser();
 
-    if (user != null) {
-      // Update FCM token on backend after successful auth check
-      final fcmToken = await NotificationService().getToken();
-      NotificationService().updateTokenOnBackend(fcmToken);
+      if (user != null) {
+        // Update FCM token on backend after successful auth check
+        final fcmToken = await NotificationService().getToken();
+        NotificationService().updateTokenOnBackend(fcmToken);
+      }
+
+      return user != null;
+    } catch (e) {
+      debugPrint('Check auth error: $e');
+      return false;
     }
-
-    return user != null;
   }
 
   Future<UserModel?> getSavedUser() async {

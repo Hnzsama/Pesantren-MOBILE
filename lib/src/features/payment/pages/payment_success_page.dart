@@ -31,7 +31,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     final fontBold = await PdfGoogleFonts.interBold();
 
     // Load Logo
-    final logoImage = await imageFromAssetBundle('assets/logo.png');
+    final logoImage = await imageFromAssetBundle('assets/logo_sandigi.png');
     // Using simple text checkmark for now to avoid needing another asset,
     // or draw a shape. Let's draw a shape.
 
