@@ -40,7 +40,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/logo.png"
+  image_path: "assets/logo_sandigi.png"
 
 flutter:
   uses-material-design: true
