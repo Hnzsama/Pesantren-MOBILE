@@ -58,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo with animation
-            Image.asset('assets/logo.png', width: 150, height: 150)
+            Image.asset('assets/logo_sandigi.png', width: 150, height: 150)
                 .animate()
                 .fade(duration: 800.ms)
                 .scale(
